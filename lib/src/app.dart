@@ -17,9 +17,39 @@ class _TurneoAppState extends State<TurneoApp>{
 
 class CalendarScreen extends StatefulWidget{const CalendarScreen({super.key});@override State<CalendarScreen> createState()=>_CalendarScreenState();}
 class _CalendarScreenState extends State<CalendarScreen>{
-  final repo=TurneoRepository();DateTime month=DateTime(DateTime.now().year,DateTime.now().month);late Future<MonthData> data;int view=0;
-  @override void initState(){super.initState();data=repo.loadMonth(month);}
+  final repo=TurneoRepository();DateTime month=DateTime(DateTime.now().year,DateTime.now().month);late Future<MonthData> data;int view=0;String? localUserId;
+  @override void initState(){super.initState();data=repo.loadMonth(month);repo.currentLocalUserId().then((id){if(mounted)setState(()=>localUserId=id);});}
   void move(int n){setState((){month=DateTime(month.year,month.month+n);data=repo.loadMonth(month);});}
+  Future<void> _editService(MonthData d,AppUser user,DateTime date) async{
+    final services=await repo.loadServices();
+    if(!mounted)return;
+    final picked=await showModalBottomSheet<String>(
+      context:context,
+      isScrollControlled:true,
+      builder:(context)=>SafeArea(child:Padding(
+        padding:const EdgeInsets.all(12),
+        child:Column(mainAxisSize:MainAxisSize.min,children:[
+          Text('${date.day}/${date.month} · ${user.name}',style:const TextStyle(fontSize:18,fontWeight:FontWeight.w900)),
+          const SizedBox(height:10),
+          Flexible(child:GridView.builder(
+            shrinkWrap:true,
+            gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:3,childAspectRatio:1.8,crossAxisSpacing:6,mainAxisSpacing:6),
+            itemCount:services.length,
+            itemBuilder:(context,i){final s=services[i];return FilledButton(
+              style:FilledButton.styleFrom(backgroundColor:d.serviceColor(s.code),padding:const EdgeInsets.all(6)),
+              onPressed:()=>Navigator.pop(context,s.code),
+              child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[Text(s.code,style:const TextStyle(fontWeight:FontWeight.w900)),Text(s.label,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:8))]),
+            );},
+          )),
+          TextButton(onPressed:()=>Navigator.pop(context,'__CLEAR__'),child:const Text('BORRAR SERVICIO')),
+        ]),
+      )),
+    );
+    if(picked==null)return;
+    await repo.saveService(user.id,date,picked=='__CLEAR__'?null:picked);
+    if(mounted)setState(()=>data=repo.loadMonth(month));
+  }
+
   @override Widget build(BuildContext context)=>Scaffold(
     appBar:AppBar(title:const Text('TURNEO',style:TextStyle(fontWeight:FontWeight.w900,letterSpacing:.6)),centerTitle:true,actions:[IconButton(onPressed:()async{await Supabase.instance.client.auth.signOut();if(mounted)setState((){});},icon:const Icon(Icons.logout))]),
     body:FutureBuilder<MonthData>(future:data,builder:(context,s){
@@ -30,7 +60,7 @@ class _CalendarScreenState extends State<CalendarScreen>{
         Padding(padding:const EdgeInsets.symmetric(horizontal:8),child:Row(children:[IconButton(onPressed:()=>move(-1),icon:const Icon(Icons.chevron_left)),Expanded(child:Center(child:Text(d.title,style:const TextStyle(fontSize:18,fontWeight:FontWeight.w900)))),IconButton(onPressed:()=>move(1),icon:const Icon(Icons.chevron_right))])),
         SummaryCards(data:d,user:selected),
         Padding(padding:const EdgeInsets.fromLTRB(6,8,6,3),child:Row(children:['L','M','X','J','V','S','D'].map((x)=>Expanded(child:Center(child:Text(x,style:const TextStyle(fontSize:12,fontWeight:FontWeight.w800,color:Color(0xFF9AA9BA)))))).toList())),
-        Expanded(child:MonthGrid(data:d,user:selected)),
+        Expanded(child:MonthGrid(data:d,user:selected,onEdit:selected!=null&&selected.id==localUserId?(date)=>_editService(d,selected,date):null)),
       ]);
     }),
     bottomNavigationBar:FutureBuilder<MonthData>(future:data,builder:(context,s){
@@ -65,17 +95,17 @@ class SummaryCards extends StatelessWidget{
 }
 
 class MonthGrid extends StatelessWidget{
-  final MonthData data;final AppUser? user;const MonthGrid({super.key,required this.data,this.user});
+  final MonthData data;final AppUser? user;final ValueChanged<DateTime>? onEdit;const MonthGrid({super.key,required this.data,this.user,this.onEdit});
   String initial(String uid){final u=data.users.where((x)=>x.id==uid);return u.isEmpty?'?':u.first.name.substring(0,1).toUpperCase();}
   @override Widget build(BuildContext context){
     final first=DateTime(data.month.year,data.month.month,1),offset=first.weekday-1,days=DateTime(data.month.year,data.month.month+1,0).day;
     final order=user==null?data.users.map((u)=>u.id).toList():[user!.id];
     return GridView.builder(padding:const EdgeInsets.fromLTRB(6,2,6,8),gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:7,childAspectRatio:user==null ? .57 : .82,crossAxisSpacing:3,mainAxisSpacing:3),itemCount:offset+days,itemBuilder:(context,i){
       if(i<offset)return const SizedBox.shrink();final day=i-offset+1,date=DateTime(data.month.year,data.month.month,day),key='${date.year}-${date.month.toString().padLeft(2,'0')}-${day.toString().padLeft(2,'0')}',holiday=data.holidays[key],today=DateUtils.isSameDay(date,DateTime.now());
-      return Container(padding:const EdgeInsets.all(3),decoration:BoxDecoration(color:holiday!=null?const Color(0xFF25151B):const Color(0xFF101823),borderRadius:BorderRadius.circular(8),border:Border.all(color:today?const Color(0xFF4DA3FF):(holiday!=null?const Color(0xFF8B3349):const Color(0xFF172334)),width:today?1.8:1)),child:Column(children:[
+      return InkWell(onTap:onEdit==null?null:()=>onEdit!(date),borderRadius:BorderRadius.circular(8),child:Container(padding:const EdgeInsets.all(3),decoration:BoxDecoration(color:holiday!=null?const Color(0xFF25151B):const Color(0xFF101823),borderRadius:BorderRadius.circular(8),border:Border.all(color:today?const Color(0xFF4DA3FF):(holiday!=null?const Color(0xFF8B3349):const Color(0xFF172334)),width:today?1.8:1)),child:Column(children:[
         Row(mainAxisAlignment:MainAxisAlignment.center,children:[Text('$day',style:const TextStyle(fontWeight:FontWeight.w900)),if(today)const Padding(padding:EdgeInsets.only(left:2),child:Text('HOY',style:TextStyle(fontSize:5,color:Color(0xFF4DA3FF),fontWeight:FontWeight.w900))),if(holiday!=null)const Text(' •',style:TextStyle(color:Colors.redAccent))]),const SizedBox(height:2),
         for(final uid in order)Expanded(child:Container(width:double.infinity,margin:const EdgeInsets.symmetric(vertical:1),padding:const EdgeInsets.symmetric(horizontal:2),decoration:BoxDecoration(color:data.serviceColor(data.assignments['$uid|$key']),borderRadius:BorderRadius.circular(4)),child:FittedBox(fit:BoxFit.scaleDown,child:Text(user==null?'${initial(uid)} ${data.assignments['$uid|$key']??'—'}':(data.assignments['$uid|$key']??'—'),style:const TextStyle(fontWeight:FontWeight.w900))))),
-      ]));
+      ])));
     });
   }
 }
