@@ -1,12 +1,37 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/turneo_models.dart';
 
+class ServiceOption{
+  final String code;
+  final String label;
+  final double hours;
+  final String color;
+  const ServiceOption({required this.code,required this.label,required this.hours,required this.color});
+}
+
 class TurneoRepository{
   final SupabaseClient db=Supabase.instance.client;
   Future<List<AppUser>> loadUsers() async{
     final rows=await db.from('app_users').select('local_user_id,display_name,role,slot,color').eq('app_id','default').order('slot');
     return (rows as List).map((x)=>AppUser.fromMap(Map<String,dynamic>.from(x))).toList();
   }
+  Future<List<ServiceOption>> loadServices() async{
+    final rows=await db.from('services').select('code,label,hours,color').eq('active',true).order('code');
+    return (rows as List).map((row)=>ServiceOption(
+      code:row['code'] as String,
+      label:(row['label'] as String?)??'',
+      hours:(row['hours'] as num?)?.toDouble()??0,
+      color:(row['color'] as String?)??'#1B2635',
+    )).toList();
+  }
+
+  Future<String?> currentLocalUserId() async{
+    final uid=db.auth.currentUser?.id;
+    if(uid==null)return null;
+    final row=await db.from('app_users').select('local_user_id').eq('app_id','default').eq('auth_uid',uid).maybeSingle();
+    return row?['local_user_id'] as String?;
+  }
+
   Future<MonthData> loadMonth(DateTime month) async{
     final start=DateTime(month.year,month.month,1),end=DateTime(month.year,month.month+1,0);
     String iso(DateTime d)=>'${d.year}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')}';
