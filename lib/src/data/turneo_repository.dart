@@ -18,9 +18,9 @@ class TurneoRepository{
     ]);
     final assignments=<String,String>{};
     for(final row in (results[0] as List)){final code=row['service_code'] as String?;if(code!=null&&code.isNotEmpty)assignments['${row['user_local_id']}|${row['work_date']}']=code;}
-    final colors=<String,String>{};for(final row in (results[1] as List))colors[row['code'] as String]=(row['color'] as String?)??'#1B2635';
+    final colors=<String,String>{};for(final row in (results[1] as List)){colors[row['code'] as String]=(row['color'] as String?)??'#1B2635';}
     final users=(results[2] as List).map((x)=>AppUser.fromMap(Map<String,dynamic>.from(x))).toList();
-    final holidays=<String,String>{};for(final row in (results[3] as List))holidays[row['holiday_date'] as String]=(row['name'] as String?)??'Festivo';
+    final holidays=<String,String>{};for(final row in (results[3] as List)){holidays[row['holiday_date'] as String]=(row['name'] as String?)??'Festivo';}
     return MonthData(month:month,assignments:assignments,colors:colors,users:users,holidays:holidays);
   }
 }
