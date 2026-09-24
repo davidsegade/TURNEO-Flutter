@@ -23,7 +23,7 @@ class MonthData{
   final List<AppUser> users;
   final Map<String,String> holidays;
   MonthData({required this.month,required this.assignments,required this.colors,required this.users,required this.holidays});
-  String get title=>const ['','ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'][month.month]+' '+month.year.toString();
+  String get title=>'${const ['','ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'][month.month]} ${month.year}';
   Color serviceColor(String? code){
     final hex=colors[code]??'#1B2635';
     final v=hex.replaceFirst('#','');
