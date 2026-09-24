@@ -29,7 +29,7 @@ class _CalendarScreenState extends State<CalendarScreen>{
       return Column(children:[
         Padding(padding:const EdgeInsets.symmetric(horizontal:8),child:Row(children:[IconButton(onPressed:()=>move(-1),icon:const Icon(Icons.chevron_left)),Expanded(child:Center(child:Text(d.title,style:const TextStyle(fontSize:18,fontWeight:FontWeight.w900)))),IconButton(onPressed:()=>move(1),icon:const Icon(Icons.chevron_right))])),
         SummaryCards(data:d,user:selected),
-        const Padding(padding:EdgeInsets.fromLTRB(6,8,6,3),child:Row(children:[for(final x in ['L','M','X','J','V','S','D']) Expanded(child:Center(child:Text(x,style:TextStyle(fontSize:12,fontWeight:FontWeight.w800,color:Color(0xFF9AA9BA)))))])),
+        Padding(padding:const EdgeInsets.fromLTRB(6,8,6,3),child:Row(children:['L','M','X','J','V','S','D'].map((x)=>Expanded(child:Center(child:Text(x,style:const TextStyle(fontSize:12,fontWeight:FontWeight.w800,color:Color(0xFF9AA9BA)))))).toList())),
         Expanded(child:MonthGrid(data:d,user:selected)),
       ]);
     }),
@@ -61,7 +61,7 @@ class SummaryCards extends StatelessWidget{
     String detail(bool office)=>counts.entries.where((e)=>inOffice.contains(e.key)==office).map((e)=>'${e.key} ${e.value}').join(' · ');
     return _cards([('Servicios','$work',detail(true).isEmpty?'Sin servicios presenciales':detail(true)),('Mes',data.title,user!.name),('Descansos','$rest',detail(false).isEmpty?'Sin descansos':detail(false))]);
   }
-  Widget _cards(List<(String,String,String)> values)=>SizedBox(height:104,child:ListView.separated(padding:const EdgeInsets.symmetric(horizontal:8),scrollDirection:Axis.horizontal,itemCount:values.length,separatorBuilder:(_,__)=>const SizedBox(width:6),itemBuilder:(context,i){final x=values[i];return Container(width:150,padding:const EdgeInsets.all(10),decoration:BoxDecoration(color:const Color(0xFF101823),borderRadius:BorderRadius.circular(12),border:Border.all(color:const Color(0xFF1D2A3A))),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(x.$1,style:const TextStyle(fontSize:11,color:Color(0xFF9AA9BA),fontWeight:FontWeight.w700)),const Spacer(),Text(x.$2,style:const TextStyle(fontSize:24,fontWeight:FontWeight.w900)),Text(x.$3,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:9,color:Color(0xFF9AA9BA))) ]);}));
+  Widget _cards(List<(String,String,String)> values)=>SizedBox(height:104,child:ListView.separated(padding:const EdgeInsets.symmetric(horizontal:8),scrollDirection:Axis.horizontal,itemCount:values.length,separatorBuilder:(_,__)=>const SizedBox(width:6),itemBuilder:(context,i){final x=values[i];return Container(width:150,padding:const EdgeInsets.all(10),decoration:BoxDecoration(color:const Color(0xFF101823),borderRadius:BorderRadius.circular(12),border:Border.all(color:const Color(0xFF1D2A3A))),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(x.$1,style:const TextStyle(fontSize:11,color:Color(0xFF9AA9BA),fontWeight:FontWeight.w700)),const Spacer(),Text(x.$2,style:const TextStyle(fontSize:24,fontWeight:FontWeight.w900)),Text(x.$3,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:9,color:Color(0xFF9AA9BA)))]));}));
 }
 
 class MonthGrid extends StatelessWidget{
@@ -70,7 +70,7 @@ class MonthGrid extends StatelessWidget{
   @override Widget build(BuildContext context){
     final first=DateTime(data.month.year,data.month.month,1),offset=first.weekday-1,days=DateTime(data.month.year,data.month.month+1,0).day;
     final order=user==null?data.users.map((u)=>u.id).toList():[user!.id];
-    return GridView.builder(padding:const EdgeInsets.fromLTRB(6,2,6,8),gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:7,childAspectRatio:user==null?.57:.82,crossAxisSpacing:3,mainAxisSpacing:3),itemCount:offset+days,itemBuilder:(context,i){
+    return GridView.builder(padding:const EdgeInsets.fromLTRB(6,2,6,8),gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:7,childAspectRatio:user==null ? .57 : .82,crossAxisSpacing:3,mainAxisSpacing:3),itemCount:offset+days,itemBuilder:(context,i){
       if(i<offset)return const SizedBox.shrink();final day=i-offset+1,date=DateTime(data.month.year,data.month.month,day),key='${date.year}-${date.month.toString().padLeft(2,'0')}-${day.toString().padLeft(2,'0')}',holiday=data.holidays[key],today=DateUtils.isSameDay(date,DateTime.now());
       return Container(padding:const EdgeInsets.all(3),decoration:BoxDecoration(color:holiday!=null?const Color(0xFF25151B):const Color(0xFF101823),borderRadius:BorderRadius.circular(8),border:Border.all(color:today?const Color(0xFF4DA3FF):(holiday!=null?const Color(0xFF8B3349):const Color(0xFF172334)),width:today?1.8:1)),child:Column(children:[
         Row(mainAxisAlignment:MainAxisAlignment.center,children:[Text('$day',style:const TextStyle(fontWeight:FontWeight.w900)),if(today)const Padding(padding:EdgeInsets.only(left:2),child:Text('HOY',style:TextStyle(fontSize:5,color:Color(0xFF4DA3FF),fontWeight:FontWeight.w900))),if(holiday!=null)const Text(' •',style:TextStyle(color:Colors.redAccent))]),const SizedBox(height:2),
