@@ -32,6 +32,27 @@ class TurneoRepository{
     return row?['local_user_id'] as String?;
   }
 
+  Future<void> saveService(String userId, DateTime date, String? serviceCode) async{
+    String two(int n)=>n.toString().padLeft(2,'0');
+    final workDate='${date.year}-${two(date.month)}-${two(date.day)}';
+    final existing=await db.from('planning').select('id').eq('app_id','default').eq('user_local_id',userId).eq('work_date',workDate).maybeSingle();
+    final values=<String,dynamic>{
+      'service_code':serviceCode,
+      'updated_at':DateTime.now().toUtc().toIso8601String(),
+      'updated_by':db.auth.currentUser?.id,
+    };
+    if(existing==null){
+      await db.from('planning').insert({
+        'app_id':'default',
+        'user_local_id':userId,
+        'work_date':workDate,
+        ...values,
+      });
+    }else{
+      await db.from('planning').update(values).eq('id',existing['id']);
+    }
+  }
+
   Future<MonthData> loadMonth(DateTime month) async{
     final start=DateTime(month.year,month.month,1),end=DateTime(month.year,month.month+1,0);
     String iso(DateTime d)=>'${d.year}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')}';
