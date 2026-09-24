@@ -10,7 +10,7 @@ Future<void> main() async {
     runApp(const MissingConfigApp());
     return;
   }
-  await Supabase.initialize(url: url, anonKey: anonKey);
+  await Supabase.initialize(url: url, publishableKey: anonKey);
   runApp(const TurneoApp());
 }
 
