@@ -25,3 +25,5 @@ flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...
 ```
 
 No se guarda ninguna clave de servicio privilegiada en el repositorio.
+
+<!-- TURNEO Flutter authenticated flow -->
