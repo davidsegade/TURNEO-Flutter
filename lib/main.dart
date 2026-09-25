@@ -4,9 +4,9 @@ import 'src/app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  const url = String.fromEnvironment('SUPABASE_URL');
+  const url = 'https://iiaxbriosudkmhsqvksn.supabase.co';
   const publishableKey = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
-  if (url.isEmpty || publishableKey.isEmpty) {
+  if (publishableKey.isEmpty) {
     runApp(const MissingConfigApp());
     return;
   }
