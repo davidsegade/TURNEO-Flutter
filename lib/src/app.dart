@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'auth/login_screen.dart';
 import 'data/turneo_repository.dart';
 import 'models/turneo_models.dart';
 
@@ -11,14 +10,14 @@ class _TurneoAppState extends State<TurneoApp>{
   @override Widget build(BuildContext context)=>MaterialApp(
     title:'TURNEO',debugShowCheckedModeBanner:false,
     theme:ThemeData.dark(useMaterial3:true).copyWith(scaffoldBackgroundColor:const Color(0xFF080D14),cardColor:const Color(0xFF101823)),
-    home:Supabase.instance.client.auth.currentSession==null?LoginScreen(onSignedIn:()=>setState((){})):const CalendarScreen(),
+    home:const CalendarScreen(),
   );
 }
 
 class CalendarScreen extends StatefulWidget{const CalendarScreen({super.key});@override State<CalendarScreen> createState()=>_CalendarScreenState();}
 class _CalendarScreenState extends State<CalendarScreen>{
   final repo=TurneoRepository();DateTime month=DateTime(DateTime.now().year,DateTime.now().month);late Future<MonthData> data;int view=0;String? localUserId;
-  @override void initState(){super.initState();data=repo.loadMonth(month);repo.currentLocalUserId().then((id){if(mounted)setState(()=>localUserId=id);});}
+  @override void initState(){super.initState();data=repo.loadMonth(month);}
   void move(int n){setState((){month=DateTime(month.year,month.month+n);data=repo.loadMonth(month);});}
   Future<void> _editService(MonthData d,AppUser user,DateTime date) async{
     final services=await repo.loadServices();
@@ -51,7 +50,7 @@ class _CalendarScreenState extends State<CalendarScreen>{
   }
 
   @override Widget build(BuildContext context)=>Scaffold(
-    appBar:AppBar(title:const Text('TURNEO',style:TextStyle(fontWeight:FontWeight.w900,letterSpacing:.6)),centerTitle:true,actions:[IconButton(onPressed:()async{await Supabase.instance.client.auth.signOut();if(mounted)setState((){});},icon:const Icon(Icons.logout))]),
+    appBar:AppBar(title:const Text('TURNEO',style:TextStyle(fontWeight:FontWeight.w900,letterSpacing:.6)),centerTitle:true),
     body:FutureBuilder<MonthData>(future:data,builder:(context,s){
       if(s.hasError)return Center(child:Text('Error: ${s.error}'));
       if(!s.hasData)return const Center(child:CircularProgressIndicator());
@@ -60,7 +59,7 @@ class _CalendarScreenState extends State<CalendarScreen>{
         Padding(padding:const EdgeInsets.symmetric(horizontal:8),child:Row(children:[IconButton(onPressed:()=>move(-1),icon:const Icon(Icons.chevron_left)),Expanded(child:Center(child:Text(d.title,style:const TextStyle(fontSize:18,fontWeight:FontWeight.w900)))),IconButton(onPressed:()=>move(1),icon:const Icon(Icons.chevron_right))])),
         SummaryCards(data:d,user:selected),
         Padding(padding:const EdgeInsets.fromLTRB(6,8,6,3),child:Row(children:['L','M','X','J','V','S','D'].map((x)=>Expanded(child:Center(child:Text(x,style:const TextStyle(fontSize:12,fontWeight:FontWeight.w800,color:Color(0xFF9AA9BA)))))).toList())),
-        Expanded(child:MonthGrid(data:d,user:selected,onEdit:selected!=null&&selected.id==localUserId?(date)=>_editService(d,selected,date):null)),
+        Expanded(child:MonthGrid(data:d,user:selected,onEdit:selected!=null?(date)=>_editService(d,selected,date):null)),
       ]);
     }),
     bottomNavigationBar:FutureBuilder<MonthData>(future:data,builder:(context,s){
