@@ -5,12 +5,12 @@ import 'src/app.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   const url = 'https://iiaxbriosudkmhsqvksn.supabase.co';
-  const publishableKey = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
-  if (publishableKey.isEmpty) {
+  const apiKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+  if (apiKey.isEmpty) {
     runApp(const MissingConfigApp());
     return;
   }
-  await Supabase.initialize(url: url, publishableKey: publishableKey);
+  await Supabase.initialize(url: url, anonKey: apiKey);
   runApp(const TurneoApp());
 }
 
