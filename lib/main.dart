@@ -10,7 +10,8 @@ Future<void> main() async {
     runApp(const MissingConfigApp());
     return;
   }
-  // ignore: deprecated_member_use\n  await Supabase.initialize(url: url, anonKey: anonKey);
+  // ignore: deprecated_member_use
+  await Supabase.initialize(url: url, anonKey: anonKey);
   runApp(const TurneoApp());
 }
 
