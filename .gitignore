@@ -9,3 +9,6 @@ build/
 *.iml
 .DS_Store
 .env
+
+build-config.json
+work/
