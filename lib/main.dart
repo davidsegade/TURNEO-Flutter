@@ -4,23 +4,35 @@ import 'src/app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  const url = 'https://iiaxbriosudkmhsqvksn.supabase.co';
-  const apiKey = String.fromEnvironment('SUPABASE_ANON_KEY');
-  if (apiKey.isEmpty) {
-    runApp(const MissingConfigApp());
+  const url = String.fromEnvironment('SUPABASE_URL');
+  const apiKey = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
+  if (url != 'https://iiaxbriosudkmhsqvksn.supabase.co' ||
+      !apiKey.startsWith('sb_publishable_') ||
+      apiKey != apiKey.trim()) {
+    runApp(const ConfigErrorApp());
     return;
   }
-  // Legacy anon JWT is intentional while validating web compatibility.
-  // ignore: deprecated_member_use
-  await Supabase.initialize(url: url, anonKey: apiKey);
-  runApp(const TurneoApp());
+  try {
+    await Supabase.initialize(url: url, publishableKey: apiKey, debug: false);
+    runApp(const TurneoApp());
+  } catch (_) {
+    runApp(const ConfigErrorApp());
+  }
 }
 
-class MissingConfigApp extends StatelessWidget {
-  const MissingConfigApp({super.key});
+class ConfigErrorApp extends StatelessWidget {
+  const ConfigErrorApp({super.key});
   @override
-  Widget build(BuildContext context) => const MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: Scaffold(body: Center(child: Text('Falta configurar Supabase'))),
-  );
+  Widget build(BuildContext context) => MaterialApp(
+        title: 'TURNEO',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData.dark(useMaterial3: true),
+        home: const Scaffold(
+            body: Center(
+                child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+              'No se ha podido iniciar TURNEO. Revisa la conexión y vuelve a abrir la aplicación.'),
+        ))),
+      );
 }
