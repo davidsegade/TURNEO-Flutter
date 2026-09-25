@@ -36,7 +36,7 @@ jobs:
           SUPABASE_URL: https://iiaxbriosudkmhsqvksn.supabase.co
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-        run: python3 tool/check_config.py
+        run: python3 tool/check_config.py/check_config.py
       - name: Build web
         env:
           SUPABASE_URL: https://iiaxbriosudkmhsqvksn.supabase.co
