@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'data/turneo_repository.dart';
 import 'models/turneo_models.dart';
 
