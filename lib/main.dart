@@ -10,6 +10,8 @@ Future<void> main() async {
     runApp(const MissingConfigApp());
     return;
   }
+  // Legacy anon JWT is intentional while validating web compatibility.
+  // ignore: deprecated_member_use
   await Supabase.initialize(url: url, anonKey: apiKey);
   runApp(const TurneoApp());
 }
