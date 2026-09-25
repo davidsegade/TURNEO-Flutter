@@ -5,9 +5,9 @@ import 'src/app.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   const url = String.fromEnvironment('SUPABASE_URL');
-  const apiKey = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
+  const apiKey = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY', defaultValue: String.fromEnvironment('SUPABASE_ANON_KEY'));
   if (url != 'https://iiaxbriosudkmhsqvksn.supabase.co' ||
-      !apiKey.startsWith('sb_publishable_') ||
+      (!apiKey.startsWith('sb_publishable_') && !apiKey.startsWith('eyJ')) ||
       apiKey != apiKey.trim()) {
     runApp(const ConfigErrorApp());
     return;
