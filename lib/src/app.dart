@@ -115,8 +115,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
       if (mounted &&
           month.year == d.month.year &&
           month.month == d.month.month) {
-        setState(
-            () => data = Future.value(d.withAssignment(user.id, date, saved)));
+        setState(() => data = Future.value(d.withAssignment(user.id, date, saved)));
+        _refreshVisibleMonthLater(d.month);
       }
     } catch (_) {
       if (mounted) {
@@ -127,6 +127,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
     } finally {
       if (mounted) setState(() => saving = false);
     }
+  }
+
+  void _refreshVisibleMonthLater(DateTime editedMonth) {
+    Future<void>.delayed(const Duration(seconds: 2), () async {
+      if (!mounted || month.year != editedMonth.year || month.month != editedMonth.month) return;
+      try {
+        final refreshed = await repo.loadMonth(month);
+        if (mounted && month.year == editedMonth.year && month.month == editedMonth.month) {
+          setState(() => data = Future.value(refreshed));
+        }
+      } catch (_) {}
+    });
   }
 
   @override
