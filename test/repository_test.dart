@@ -32,6 +32,16 @@ void main() {
                   'slot': 1
                 }
               ],
+            'balance_snapshots' => [
+                {
+                  'user_local_id': 'u2',
+                  'das_available': 3,
+                  'das_generated': 1,
+                  'df_available': 2,
+                  'pico_close': 1,
+                  'pico_manual': 0
+                }
+              ],
             'planning' => [
                 {
                   'work_date': '2026-12-01',
@@ -55,6 +65,11 @@ void main() {
     final month = await repo.loadMonth(DateTime(2026, 12, 15));
     expect(month.assignments, {'u2|2026-12-01': 'MC'});
     expect(month.hours['MC'], 7.5);
+    expect(month.balances['u2']?.dasAvailable, 3);
+    expect(month.balances['u2']?.dfAvailable, 2);
+    expect(month.balances['u2']?.pico, 0);
+    final balanceRequest = requests.firstWhere((r) => r.url.pathSegments.last == 'balance_snapshots');
+    expect(balanceRequest.url.queryParameters['period_id'], 'eq.2026-12');
     for (final request in requests.where(
         (r) => ['planning', 'holidays'].contains(r.url.pathSegments.last))) {
       final column = request.url.pathSegments.last == 'planning'
