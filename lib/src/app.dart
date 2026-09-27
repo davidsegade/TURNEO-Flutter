@@ -36,7 +36,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
   late final repo = widget.repository;
   DateTime month = DateTime(DateTime.now().year, DateTime.now().month);
   late Future<MonthData> data;
-  int view = 0;
   String? selectedUserId;
   bool saving = false;
   @override
@@ -183,10 +182,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   : d.users.cast<AppUser?>().firstWhere(
                       (u) => u?.id == selectedUserId,
                       orElse: () => null);
-              final selectedIndex = selected == null
-                  ? 0
-                  : d.users.indexWhere((u) => u.id == selected.id) + 1;
-              if (view != selectedIndex) view = selectedIndex;
               return Column(children: [
                 Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -250,7 +245,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   onDestinationSelected: saving
                       ? null
                       : (i) => setState(() {
-                            view = i;
                             selectedUserId = i == 0 ? null : users[i - 1].id;
                           }),
                   destinations: [
