@@ -93,6 +93,9 @@ void main() {
       expect(repo.writes.single.$3, 'MC');
       expect(repo.loads.length, 1);
       expect(find.text('MC', findRichText: true), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pumpAndSettle();
+      expect(repo.loads.length, 2);
       await tester.tap(find.text('DAVID'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('1'));
@@ -100,7 +103,7 @@ void main() {
       expect(find.text('BORRAR SERVICIO'), findsNothing);
       await tester.tap(find.byIcon(Icons.chevron_right));
       await tester.pumpAndSettle();
-      expect(repo.loads.length, 2);
+      expect(repo.loads.length, 3);
       expect(repo.loads.last,
           DateTime(repo.loads.first.year, repo.loads.first.month + 1));
       expect(tester.takeException(), isNull);
