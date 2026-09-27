@@ -45,17 +45,19 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       if (mounted) widget.onSignedIn();
     } on FunctionException catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() => error = e.details is Map
             ? (e.details['error'] as String? ??
                 'No se ha podido registrar el acceso.')
             : 'No se ha podido registrar el acceso.');
+      }
     } on AuthException catch (e) {
       if (mounted) setState(() => error = e.message);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() =>
             error = 'No se ha podido iniciar sesión. Inténtalo de nuevo.');
+      }
     } finally {
       if (mounted) setState(() => busy = false);
     }

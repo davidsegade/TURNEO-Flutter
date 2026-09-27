@@ -21,8 +21,9 @@ class TurneoRepository {
 
   Future<AppUser> loadProfile() async {
     final uid = db.auth.currentUser?.id;
-    if (uid == null)
+    if (uid == null) {
       throw StateError('Inicia sesión para acceder al cuadrante.');
+    }
     final row = await db
         .from('app_users')
         .select('local_user_id,display_name,role,slot,color')
@@ -30,9 +31,10 @@ class TurneoRepository {
         .eq('auth_uid', uid)
         .eq('active', true)
         .maybeSingle();
-    if (row == null)
+    if (row == null) {
       throw StateError(
           'Este acceso no está asociado a un usuario activo de TURNEO.');
+    }
     return profile = AppUser.fromMap(row);
   }
 
@@ -71,8 +73,9 @@ class TurneoRepository {
   // The unique key is the existing planning key; audit triggers feed Sheets.
   Future<String?> saveService(
       String userId, DateTime date, String? serviceCode) async {
-    if (!canEdit(userId))
+    if (!canEdit(userId)) {
       throw StateError('No puedes modificar este cuadrante.');
+    }
     final row = await db
         .from('planning')
         .upsert({
@@ -110,8 +113,9 @@ class TurneoRepository {
     final assignments = <String, String>{};
     for (final row in results[0] as List) {
       final code = row['service_code'] as String?;
-      if (code != null && code.isNotEmpty)
+      if (code != null && code.isNotEmpty) {
         assignments['${row['user_local_id']}|${row['work_date']}'] = code;
+      }
     }
     final services = results[1] as List<ServiceOption>;
     return MonthData(

@@ -75,7 +75,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 3,
-                              childAspectRatio: 1.8,
+                              mainAxisExtent: 76,
                               crossAxisSpacing: 6,
                               mainAxisSpacing: 6),
                       itemCount: services.length,
@@ -119,10 +119,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
             () => data = Future.value(d.withAssignment(user.id, date, saved)));
       }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text(
                 'No se ha podido guardar o cargar el servicio. Comprueba la conexión y tus permisos.')));
+      }
     } finally {
       if (mounted) setState(() => saving = false);
     }
@@ -150,7 +151,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         body: FutureBuilder<MonthData>(
             future: data,
             builder: (context, s) {
-              if (s.hasError)
+              if (s.hasError) {
                 return Center(
                     child: Column(mainAxisSize: MainAxisSize.min, children: [
                   const Text('No se ha podido cargar el mes.'),
@@ -159,8 +160,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           setState(() => data = repo.loadMonth(month)),
                       child: const Text('REINTENTAR'))
                 ]));
-              if (s.connectionState != ConnectionState.done || !s.hasData)
+              }
+              if (s.connectionState != ConnectionState.done || !s.hasData) {
                 return const Center(child: CircularProgressIndicator());
+              }
               final d = s.data!,
                   selected = view == 0
                       ? null
@@ -318,7 +321,7 @@ class SummaryCards extends StatelessWidget {
   }
 
   Widget _cards(List<(String, String, String)> values) => SizedBox(
-      height: 104,
+      height: 124,
       child: ListView.separated(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           scrollDirection: Axis.horizontal,
@@ -417,7 +420,8 @@ class MonthGrid extends StatelessWidget {
                                   : const Color(0xFF172334)),
                           width: today ? 1.8 : 1)),
                   child: Column(children: [
-                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    FittedBox(
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
                       Text('$day',
                           style: const TextStyle(fontWeight: FontWeight.w900)),
                       if (today)
@@ -431,7 +435,7 @@ class MonthGrid extends StatelessWidget {
                       if (holiday != null)
                         const Text(' •',
                             style: TextStyle(color: Colors.redAccent))
-                    ]),
+                    ])),
                     const SizedBox(height: 2),
                     for (final uid in order)
                       Expanded(

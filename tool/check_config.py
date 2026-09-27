@@ -29,7 +29,7 @@ def main():
     target = pathlib.Path('build-config.json')
     target.write_text(json.dumps({'SUPABASE_URL': url, 'SUPABASE_PUBLISHABLE_KEY': key}))
     target.chmod(0o600)
-    print('Supabase Auth and four REST endpoints accepted the public configuration. RLS remains enabled.')
+    print('Supabase Auth and four REST endpoints accepted the public configuration.')
 
 if __name__ == '__main__':
     main()

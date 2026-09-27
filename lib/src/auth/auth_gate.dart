@@ -33,9 +33,10 @@ class _AuthGateState extends State<AuthGate> {
         _syncSession();
       });
     }, onError: (_) {
-      if (mounted)
+      if (mounted) {
         setState(() =>
             _error = 'No se ha podido renovar la sesión. Vuelve a entrar.');
+      }
     });
   }
 
@@ -52,20 +53,23 @@ class _AuthGateState extends State<AuthGate> {
     try {
       await auth.signOut(scope: SignOutScope.local);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() =>
             _error = 'No se ha podido cerrar la sesión. Inténtalo de nuevo.');
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_uid == null)
+    if (_uid == null) {
       return LoginScreen(onSignedIn: () {
         if (mounted) setState(_syncSession);
       });
-    if (_recovering)
+    }
+    if (_recovering) {
       return PasswordScreen(onSaved: () => setState(() => _recovering = false));
+    }
     return FutureBuilder<AppUser>(
         future: _profile,
         builder: (context, snapshot) {
@@ -91,9 +95,10 @@ class _AuthGateState extends State<AuthGate> {
                           ],
                         ))));
           }
-          if (!snapshot.hasData)
+          if (!snapshot.hasData) {
             return const Scaffold(
                 body: Center(child: CircularProgressIndicator()));
+          }
           return CalendarScreen(
               key: ValueKey(_uid), repository: _repo!, onLogout: _logout);
         });
@@ -134,9 +139,10 @@ class _PasswordScreenState extends State<PasswordScreen> {
           .updateUser(UserAttributes(password: password.text));
       if (mounted) widget.onSaved();
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() => error =
             'No se ha podido guardar. Solicita un nuevo enlace si ha caducado.');
+      }
     } finally {
       if (mounted) setState(() => busy = false);
     }

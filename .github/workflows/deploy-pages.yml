@@ -25,18 +25,21 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.47.5'
           cache: true
       - run: flutter create --platforms=web --project-name turneo .
       - run: flutter pub get
       - name: Analyze
-        continue-on-error: true
         run: flutter analyze
-      - name: Build web
+      - name: Test
+        run: flutter test
+      - name: Supabase configuration preflight
         env:
           SUPABASE_URL: https://iiaxbriosudkmhsqvksn.supabase.co
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-        run: flutter build web --release --base-href "/TURNEO-Flutter/" --dart-define=SUPABASE_URL="$SUPABASE_URL" --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
+        run: python3 tool/check_config.py
+      - name: Build web
+        run: flutter build web --release --base-href "/TURNEO-Flutter/" --dart-define-from-file=build-config.json
       - uses: actions/configure-pages@v5
         with:
           enablement: true
