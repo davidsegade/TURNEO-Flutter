@@ -186,6 +186,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           icon: const Icon(Icons.chevron_right))
                     ])),
                 SummaryCards(data: d, user: selected),
+                if (selected != null)
+                  BalanceStrip(balance: d.balances[selected.id]),
                 Padding(
                     padding: const EdgeInsets.fromLTRB(6, 8, 6, 3),
                     child: Row(
@@ -367,6 +369,39 @@ class SummaryCards extends StatelessWidget {
                                   fontSize: 9, color: Color(0xFF9AA9BA)))
                         ])));
           }));
+}
+
+
+class BalanceStrip extends StatelessWidget {
+  final BalanceSnapshot? balance;
+  const BalanceStrip({super.key, required this.balance});
+  @override
+  Widget build(BuildContext context) {
+    String value(int? v) => v?.toString() ?? '—';
+    final b = balance;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 0),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF101823),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFF1D2A3A)),
+        ),
+        child: Row(children: [
+          _item('DAS', value(b?.dasAvailable)),
+          _item('DF', value(b?.dfAvailable)),
+          _item('PICO', value(b?.pico)),
+        ]),
+      ),
+    );
+  }
+  Widget _item(String label, String value) => Expanded(
+    child: Column(mainAxisSize: MainAxisSize.min, children: [
+      Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF9AA9BA), fontWeight: FontWeight.w800)),
+      Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+    ]),
+  );
 }
 
 class MonthGrid extends StatelessWidget {
