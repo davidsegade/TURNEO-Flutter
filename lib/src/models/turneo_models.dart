@@ -24,6 +24,12 @@ class AppUser {
       );
 }
 
+class BalanceSnapshot {
+  final int? dasAvailable, dasGenerated, dfAvailable, picoClose, picoManual;
+  const BalanceSnapshot({this.dasAvailable, this.dasGenerated, this.dfAvailable, this.picoClose, this.picoManual});
+  int? get pico => picoManual ?? picoClose;
+}
+
 class MonthData {
   final DateTime month;
   final Map<String, String> assignments;
@@ -31,13 +37,15 @@ class MonthData {
   final List<AppUser> users;
   final Map<String, String> holidays;
   final Map<String, double> hours;
+  final Map<String, BalanceSnapshot> balances;
   MonthData(
       {required this.month,
       required this.assignments,
       required this.colors,
       required this.users,
       required this.holidays,
-      this.hours = const {}});
+      this.hours = const {},
+      this.balances = const {}});
   String get title => '${const [
         '',
         'ENERO',
@@ -67,7 +75,8 @@ class MonthData {
         colors: colors,
         users: users,
         holidays: holidays,
-        hours: hours);
+        hours: hours,
+        balances: balances);
   }
 
   Color serviceTextColor(String? code) =>
