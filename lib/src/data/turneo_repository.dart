@@ -109,6 +109,11 @@ class TurneoRepository {
           .eq('app_id', 'default')
           .gte('holiday_date', isoDate(start))
           .lt('holiday_date', isoDate(end)),
+      db
+          .from('balance_snapshots')
+          .select('user_local_id,das_available,das_generated,df_available,pico_close,pico_manual')
+          .eq('app_id', 'default')
+          .eq('period_id', '${start.year}-${start.month.toString().padLeft(2, '0')}'),
     ]);
     final assignments = <String, String>{};
     for (final row in results[0] as List) {
@@ -127,6 +132,16 @@ class TurneoRepository {
       holidays: {
         for (final row in results[3] as List)
           row['holiday_date'] as String: row['name'] as String
+      },
+      balances: {
+        for (final row in results[4] as List)
+          row['user_local_id'] as String: BalanceSnapshot(
+            dasAvailable: (row['das_available'] as num?)?.toInt(),
+            dasGenerated: (row['das_generated'] as num?)?.toInt(),
+            dfAvailable: (row['df_available'] as num?)?.toInt(),
+            picoClose: (row['pico_close'] as num?)?.toInt(),
+            picoManual: (row['pico_manual'] as num?)?.toInt(),
+          )
       },
     );
   }
