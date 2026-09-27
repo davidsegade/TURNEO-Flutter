@@ -37,6 +37,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime month = DateTime(DateTime.now().year, DateTime.now().month);
   late Future<MonthData> data;
   int view = 0;
+  String? selectedUserId;
   bool saving = false;
   @override
   void initState() {
@@ -176,10 +177,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
               if (s.connectionState != ConnectionState.done || !s.hasData) {
                 return const Center(child: CircularProgressIndicator());
               }
-              final d = s.data!,
-                  selected = view == 0
-                      ? null
-                      : (view - 1 < d.users.length ? d.users[view - 1] : null);
+              final d = s.data!;
+              final selected = selectedUserId == null
+                  ? null
+                  : d.users.cast<AppUser?>().firstWhere(
+                      (u) => u?.id == selectedUserId,
+                      orElse: () => null);
+              final selectedIndex = selected == null
+                  ? 0
+                  : d.users.indexWhere((u) => u.id == selected.id) + 1;
+              if (view != selectedIndex) view = selectedIndex;
               return Column(children: [
                 Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -234,9 +241,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ];
               return NavigationBar(
                   height: 66,
-                  selectedIndex: view < labels.length ? view : 0,
-                  onDestinationSelected:
-                      saving ? null : (i) => setState(() => view = i),
+                  selectedIndex: selectedUserId == null
+                      ? 0
+                      : (() {
+                          final i = users.indexWhere((u) => u.id == selectedUserId);
+                          return i < 0 ? 0 : i + 1;
+                        })(),
+                  onDestinationSelected: saving
+                      ? null
+                      : (i) => setState(() {
+                            view = i;
+                            selectedUserId = i == 0 ? null : users[i - 1].id;
+                          }),
                   destinations: [
                     for (int i = 0; i < labels.length; i++)
                       NavigationDestination(
