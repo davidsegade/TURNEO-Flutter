@@ -110,6 +110,26 @@ void main() {
     });
   }
 
+  testWidgets('editing David keeps David selected after background refresh',
+      (tester) async {
+    final repo = CalendarRepository()..profile = users[1];
+    await tester.pumpWidget(MaterialApp(
+        home: CalendarScreen(repository: repo, onLogout: () async {})));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('DAVID'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('1'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('MC'));
+    await tester.pumpAndSettle();
+    expect(repo.writes.single.$1, 'u1');
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+    final nav = tester.widget<NavigationBar>(find.byType(NavigationBar));
+    expect(nav.selectedIndex, 2);
+    expect(find.text('MC', findRichText: true), findsNothing);
+  });
+
   testWidgets('failed save leaves the cell unchanged and permits retry',
       (tester) async {
     final repo = CalendarRepository()..failWrite = true;
