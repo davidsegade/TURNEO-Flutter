@@ -64,6 +64,29 @@ void main() {
     expect(changed.serviceTextColor('TC'), Colors.black);
   });
 
+
+  test('balance uses manual PICO only when present', () {
+    const automatic = BalanceSnapshot(picoClose: 2);
+    const overridden = BalanceSnapshot(picoClose: 2, picoManual: 0);
+    expect(automatic.pico, 2);
+    expect(overridden.pico, 0);
+  });
+
+  test('month patch preserves balance snapshots', () {
+    const balance = BalanceSnapshot(
+        dasAvailable: 1, dasGenerated: 2, dfAvailable: 3, picoClose: 1);
+    final original = MonthData(
+        month: DateTime(2026, 9),
+        assignments: {'u1|2026-09-01': 'M'},
+        colors: const {'M': '#FFFFFF'},
+        users: users,
+        holidays: const {},
+        balances: const {'u1': balance});
+    final changed = original.withAssignment('u1', DateTime(2026, 9, 1), 'MC');
+    expect(changed.balances['u1'], same(balance));
+    expect(changed.assignments['u1|2026-09-01'], 'MC');
+  });
+
   for (final width in [320.0, 390.0]) {
     testWidgets(
         'mobile calendar $width keeps 7 columns and saves without reload',
