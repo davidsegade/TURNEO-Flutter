@@ -151,6 +151,26 @@ void main() {
     expect(nav.selectedIndex, 2);
   });
 
+  testWidgets('editing any user keeps that same user selected after refresh',
+      (tester) async {
+    final repo = CalendarRepository()..profile = users[1];
+    await tester.pumpWidget(MaterialApp(
+        home: CalendarScreen(repository: repo, onLogout: () async {})));
+    await tester.pumpAndSettle();
+    for (var index = 0; index < users.length; index++) {
+      await tester.tap(find.text(users[index].name.toUpperCase()));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('MC'));
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+      final nav = tester.widget<NavigationBar>(find.byType(NavigationBar));
+      expect(nav.selectedIndex, index + 1);
+    }
+  });
+
   testWidgets('failed save leaves the cell unchanged and permits retry',
       (tester) async {
     final repo = CalendarRepository()..failWrite = true;
