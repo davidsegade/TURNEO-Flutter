@@ -114,7 +114,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 ))),
       );
       if (picked == null) return;
-      setState(() => saving = true);
+      // Lock both editing and the visible user before the modal finishes closing.
+      // This prevents the closing tap from ever changing the bottom navigation.
+      setState(() {
+        saving = true;
+        selectedUserId = user.id;
+      });
       final saved = await repo.saveService(
           user.id, date, picked == '__CLEAR__' ? null : picked);
       if (mounted &&
