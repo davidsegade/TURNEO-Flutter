@@ -51,6 +51,23 @@ class _CalendarScreenState extends State<CalendarScreen> {
     });
   }
 
+  Future<void> _refreshMonth() async {
+    if (saving) return;
+    final requested = month;
+    try {
+      final refreshed = await repo.loadMonth(requested);
+      if (!mounted ||
+          month.year != requested.year ||
+          month.month != requested.month) return;
+      setState(() => data = Future.value(refreshed));
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('No se ha podido actualizar. Se mantienen los datos mostrados.')));
+      }
+    }
+  }
+
   Future<void> _editService(MonthData d, AppUser user, DateTime date) async {
     if (saving || !repo.canEdit(user.id)) return;
     try {
@@ -151,9 +168,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             actions: [
               IconButton(
                   tooltip: 'Actualizar mes',
-                  onPressed: saving
-                      ? null
-                      : () => setState(() => data = repo.loadMonth(month)),
+                  onPressed: saving ? null : _refreshMonth,
                   icon: const Icon(Icons.refresh)),
               IconButton(
                   tooltip: 'Cerrar sesión',
