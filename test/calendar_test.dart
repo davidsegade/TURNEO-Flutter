@@ -171,6 +171,20 @@ void main() {
     }
   });
 
+  testWidgets('changing month keeps the selected user',
+      (tester) async {
+    final repo = CalendarRepository()..profile = users[1];
+    await tester.pumpWidget(MaterialApp(
+        home: CalendarScreen(repository: repo, onLogout: () async {})));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('ALEJANDRO'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.chevron_right));
+    await tester.pumpAndSettle();
+    final nav = tester.widget<NavigationBar>(find.byType(NavigationBar));
+    expect(nav.selectedIndex, 3);
+  });
+
   testWidgets('failed save leaves the cell unchanged and permits retry',
       (tester) async {
     final repo = CalendarRepository()..failWrite = true;
