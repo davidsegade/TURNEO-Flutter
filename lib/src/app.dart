@@ -51,21 +51,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
     });
   }
 
-  Future<void> _refreshMonth() async {
+  void _refreshMonth() {
     if (saving) return;
-    final requested = month;
-    try {
-      final refreshed = await repo.loadMonth(requested);
-      if (!mounted ||
-          month.year != requested.year ||
-          month.month != requested.month) return;
-      setState(() => data = Future.value(refreshed));
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('No se ha podido actualizar. Se mantienen los datos mostrados.')));
-      }
-    }
+    setState(() => data = repo.loadMonth(month));
   }
 
   Future<void> _editService(MonthData d, AppUser user, DateTime date) async {
