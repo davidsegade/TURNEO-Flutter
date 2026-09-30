@@ -38,6 +38,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   late Future<MonthData> data;
   String? selectedUserId;
   bool saving = false;
+  DateTime navigationLockedUntil = DateTime.fromMillisecondsSinceEpoch(0);
   @override
   void initState() {
     super.initState();
@@ -91,13 +92,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               backgroundColor: d.serviceColor(s.code),
                               foregroundColor: d.serviceTextColor(s.code),
                               padding: const EdgeInsets.all(6)),
-                          onPressed: () {
-                            setState(() {
-                              saving = true;
-                              selectedUserId = user.id;
-                            });
-                            Navigator.pop(context, s.code);
-                          },
+                          onPressed: () => Navigator.pop(context, s.code),
                           child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -114,18 +109,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       },
                     )),
                     TextButton(
-                        onPressed: () {
-                          setState(() {
-                            saving = true;
-                            selectedUserId = user.id;
-                          });
-                          Navigator.pop(context, '__CLEAR__');
-                        },
+                        onPressed: () => Navigator.pop(context, '__CLEAR__'),
                         child: const Text('BORRAR SERVICIO')),
                   ]),
                 ))),
       );
       if (picked == null) return;
+      setState(() {
+        saving = true;
+        selectedUserId = user.id;
+        navigationLockedUntil =
+            DateTime.now().add(const Duration(seconds: 1));
+      });
       final saved = await repo.saveService(
           user.id, date, picked == '__CLEAR__' ? null : picked);
       if (mounted &&
@@ -143,7 +138,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 'No se ha podido guardar o cargar el servicio. Comprueba la conexión y tus permisos.')));
       }
     } finally {
-      if (mounted) setState(() => saving = false);
+      if (mounted) {
+        setState(() {
+          saving = false;
+          navigationLockedUntil =
+              DateTime.now().add(const Duration(milliseconds: 700));
+        });
+      }
     }
   }
 
@@ -249,9 +250,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         })(),
                   onDestinationSelected: saving
                       ? null
-                      : (i) => setState(() {
+                      : (i) {
+                          if (DateTime.now().isBefore(navigationLockedUntil)) {
+                            return;
+                          }
+                          setState(() {
                             selectedUserId = i == 0 ? null : users[i - 1].id;
-                          }),
+                          });
+                        },
                   destinations: [
                     for (int i = 0; i < labels.length; i++)
                       NavigationDestination(
