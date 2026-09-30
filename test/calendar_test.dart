@@ -185,6 +185,41 @@ void main() {
     expect(nav.selectedIndex, 3);
   });
 
+  testWidgets('repeated add and clear stays on the same user and writes once per action',
+      (tester) async {
+    final repo = CalendarRepository()..profile = users[1];
+    await tester.pumpWidget(MaterialApp(
+        home: CalendarScreen(repository: repo, onLogout: () async {})));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('DAVID'));
+    await tester.pumpAndSettle();
+
+    for (var round = 0; round < 3; round++) {
+      await tester.tap(find.text('1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('MC'));
+      await tester.pumpAndSettle();
+      expect(repo.writes.length, round * 2 + 1);
+      expect(repo.writes.last.$1, 'u1');
+      expect(repo.writes.last.$3, 'MC');
+      expect(find.text('MC', findRichText: true), findsOneWidget);
+      var nav = tester.widget<NavigationBar>(find.byType(NavigationBar));
+      expect(nav.selectedIndex, 2);
+
+      await tester.tap(find.text('1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('BORRAR SERVICIO'));
+      await tester.pumpAndSettle();
+      expect(repo.writes.length, round * 2 + 2);
+      expect(repo.writes.last.$1, 'u1');
+      expect(repo.writes.last.$3, isNull);
+      expect(find.text('MC', findRichText: true), findsNothing);
+      nav = tester.widget<NavigationBar>(find.byType(NavigationBar));
+      expect(nav.selectedIndex, 2);
+    }
+    expect(repo.loads.length, 1);
+  });
+
   testWidgets('failed save leaves the cell unchanged and permits retry',
       (tester) async {
     final repo = CalendarRepository()..failWrite = true;
