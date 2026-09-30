@@ -108,7 +108,7 @@ void main() {
       expect(find.text('CARLOS'), findsOneWidget);
       await tester.tap(find.text('CARLOS'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('1'));
+      await tester.tap(find.text('1').last);
       await tester.pumpAndSettle();
       await tester.tap(find.text('MC'));
       await tester.pumpAndSettle();
@@ -121,7 +121,7 @@ void main() {
       expect(repo.loads.length, 1);
       await tester.tap(find.text('DAVID'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('1'));
+      await tester.tap(find.text('1').last);
       await tester.pumpAndSettle();
       expect(find.text('BORRAR SERVICIO'), findsNothing);
       await tester.tap(find.byIcon(Icons.chevron_right));
@@ -140,7 +140,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('DAVID'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('1'));
+    await tester.tap(find.text('1').last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('MC'));
     await tester.pumpAndSettle();
@@ -160,7 +160,7 @@ void main() {
     for (var index = 0; index < users.length; index++) {
       await tester.tap(find.text(users[index].name.toUpperCase()));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('1'));
+      await tester.tap(find.text('1').last);
       await tester.pumpAndSettle();
       await tester.tap(find.text('MC'));
       await tester.pumpAndSettle();
@@ -195,7 +195,7 @@ void main() {
     await tester.pumpAndSettle();
 
     for (var round = 0; round < 3; round++) {
-      await tester.tap(find.text('1'));
+      await tester.tap(find.text('1').last);
       await tester.pumpAndSettle();
       await tester.tap(find.text('MC'));
       await tester.pumpAndSettle();
@@ -206,7 +206,7 @@ void main() {
       var nav = tester.widget<NavigationBar>(find.byType(NavigationBar));
       expect(nav.selectedIndex, 2);
 
-      await tester.tap(find.text('1'));
+      await tester.tap(find.text('1').last);
       await tester.pumpAndSettle();
       await tester.tap(find.text('BORRAR SERVICIO'));
       await tester.pumpAndSettle();
@@ -228,7 +228,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('CARLOS'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('1'));
+    await tester.tap(find.text('1').last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('MC'));
     await tester.pumpAndSettle();
