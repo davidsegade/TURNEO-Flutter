@@ -118,7 +118,7 @@ void main() {
       expect(find.text('MC', findRichText: true), findsOneWidget);
       await tester.pump(const Duration(seconds: 3));
       await tester.pumpAndSettle();
-      expect(repo.loads.length, greaterThanOrEqualTo(1));
+      expect(repo.loads.length, 1);
       await tester.tap(find.text('DAVID'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('1'));
@@ -132,7 +132,7 @@ void main() {
     });
   }
 
-  testWidgets('editing David keeps David selected after background refresh',
+  testWidgets('editing David keeps David selected after save',
       (tester) async {
     final repo = CalendarRepository()..profile = users[1];
     await tester.pumpWidget(MaterialApp(
@@ -151,7 +151,7 @@ void main() {
     expect(nav.selectedIndex, 2);
   });
 
-  testWidgets('editing any user keeps that same user selected after refresh',
+  testWidgets('editing any user keeps that same user selected after save',
       (tester) async {
     final repo = CalendarRepository()..profile = users[1];
     await tester.pumpWidget(MaterialApp(
