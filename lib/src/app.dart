@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'data/turneo_repository.dart';
 import 'models/turneo_models.dart';
@@ -38,7 +39,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
   late Future<MonthData> data;
   String? selectedUserId;
   bool saving = false;
-  DateTime navigationLockedUntil = DateTime.fromMillisecondsSinceEpoch(0);
+  Timer? navigationUnlock;
+  bool navigationLocked = false;
   @override
   void initState() {
     super.initState();
@@ -55,6 +57,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
   void _refreshMonth() {
     if (saving) return;
     setState(() => data = repo.loadMonth(month));
+  }
+
+  @override
+  void dispose() {
+    navigationUnlock?.cancel();
+    super.dispose();
   }
 
   Future<void> _editService(MonthData d, AppUser user, DateTime date) async {
@@ -118,8 +126,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
       setState(() {
         saving = true;
         selectedUserId = user.id;
-        navigationLockedUntil =
-            DateTime.now().add(const Duration(seconds: 1));
+        navigationUnlock?.cancel();
+        navigationLocked = true;
       });
       final saved = await repo.saveService(
           user.id, date, picked == '__CLEAR__' ? null : picked);
@@ -130,7 +138,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           selectedUserId = user.id;
           data = Future.value(d.withAssignment(user.id, date, saved));
         });
-       }
+      }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -141,13 +149,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
       if (mounted) {
         setState(() {
           saving = false;
-          navigationLockedUntil =
-              DateTime.now().add(const Duration(milliseconds: 700));
+          navigationUnlock?.cancel();
+          navigationUnlock = Timer(const Duration(milliseconds: 700), () {
+            navigationLocked = false;
+          });
         });
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -245,13 +254,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   selectedIndex: selectedUserId == null
                       ? 0
                       : (() {
-                          final i = users.indexWhere((u) => u.id == selectedUserId);
+                          final i =
+                              users.indexWhere((u) => u.id == selectedUserId);
                           return i < 0 ? 0 : i + 1;
                         })(),
                   onDestinationSelected: saving
                       ? null
                       : (i) {
-                          if (DateTime.now().isBefore(navigationLockedUntil)) {
+                          if (navigationLocked) {
                             return;
                           }
                           setState(() {
@@ -404,7 +414,6 @@ class SummaryCards extends StatelessWidget {
           }));
 }
 
-
 class BalanceStrip extends StatelessWidget {
   final BalanceSnapshot? balance;
   const BalanceStrip({super.key, required this.balance});
@@ -429,12 +438,19 @@ class BalanceStrip extends StatelessWidget {
       ),
     );
   }
+
   Widget _item(String label, String value) => Expanded(
-    child: Column(mainAxisSize: MainAxisSize.min, children: [
-      Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF9AA9BA), fontWeight: FontWeight.w800)),
-      Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-    ]),
-  );
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 10,
+                  color: Color(0xFF9AA9BA),
+                  fontWeight: FontWeight.w800)),
+          Text(value,
+              style:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+        ]),
+      );
 }
 
 class MonthGrid extends StatelessWidget {

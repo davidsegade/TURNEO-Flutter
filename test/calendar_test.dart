@@ -64,7 +64,6 @@ void main() {
     expect(changed.serviceTextColor('TC'), Colors.black);
   });
 
-
   test('balance uses manual PICO only when present', () {
     const automatic = BalanceSnapshot(picoClose: 2);
     const overridden = BalanceSnapshot(picoClose: 2, picoManual: 0);
@@ -108,9 +107,10 @@ void main() {
       expect(find.text('CARLOS'), findsOneWidget);
       await tester.tap(find.text('CARLOS'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('1').last);
+      await tester.tap(find.descendant(
+          of: find.byType(MonthGrid), matching: find.text('1')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('MC'));
+      await tester.tap(find.widgetWithText(FilledButton, 'MC'));
       await tester.pumpAndSettle();
       expect(repo.writes.single.$1, 'u2');
       expect(repo.writes.single.$3, 'MC');
@@ -121,7 +121,8 @@ void main() {
       expect(repo.loads.length, 1);
       await tester.tap(find.text('DAVID'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('1').last);
+      await tester.tap(find.descendant(
+          of: find.byType(MonthGrid), matching: find.text('1')));
       await tester.pumpAndSettle();
       expect(find.text('BORRAR SERVICIO'), findsNothing);
       await tester.tap(find.byIcon(Icons.chevron_right));
@@ -132,17 +133,17 @@ void main() {
     });
   }
 
-  testWidgets('editing David keeps David selected after save',
-      (tester) async {
+  testWidgets('editing David keeps David selected after save', (tester) async {
     final repo = CalendarRepository()..profile = users[1];
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
     await tester.tap(find.text('DAVID'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('1').last);
+    await tester.tap(
+        find.descendant(of: find.byType(MonthGrid), matching: find.text('1')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('MC'));
+    await tester.tap(find.widgetWithText(FilledButton, 'MC'));
     await tester.pumpAndSettle();
     expect(repo.writes.single.$1, 'u1');
     await tester.pump(const Duration(seconds: 3));
@@ -160,19 +161,22 @@ void main() {
     for (var index = 0; index < users.length; index++) {
       await tester.tap(find.text(users[index].name.toUpperCase()));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('1').last);
+      await tester.tap(find.descendant(
+          of: find.byType(MonthGrid), matching: find.text('1')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('MC'));
+      await tester.tap(find.widgetWithText(FilledButton, 'MC'));
       await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 3));
       await tester.pumpAndSettle();
       final nav = tester.widget<NavigationBar>(find.byType(NavigationBar));
       expect(nav.selectedIndex, index + 1);
+      expect(repo.writes.length, index + 1);
+      expect(repo.writes.last.$1, users[index].id);
+      expect(repo.writes.last.$3, 'MC');
     }
   });
 
-  testWidgets('changing month keeps the selected user',
-      (tester) async {
+  testWidgets('changing month keeps the selected user', (tester) async {
     final repo = CalendarRepository()..profile = users[1];
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
@@ -185,7 +189,8 @@ void main() {
     expect(nav.selectedIndex, 3);
   });
 
-  testWidgets('repeated add and clear stays on the same user and writes once per action',
+  testWidgets(
+      'repeated add and clear stays on the same user and writes once per action',
       (tester) async {
     final repo = CalendarRepository()..profile = users[1];
     await tester.pumpWidget(MaterialApp(
@@ -195,9 +200,10 @@ void main() {
     await tester.pumpAndSettle();
 
     for (var round = 0; round < 3; round++) {
-      await tester.tap(find.text('1').last);
+      await tester.tap(find.descendant(
+          of: find.byType(MonthGrid), matching: find.text('1')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('MC'));
+      await tester.tap(find.widgetWithText(FilledButton, 'MC'));
       await tester.pumpAndSettle();
       expect(repo.writes.length, round * 2 + 1);
       expect(repo.writes.last.$1, 'u1');
@@ -206,7 +212,8 @@ void main() {
       var nav = tester.widget<NavigationBar>(find.byType(NavigationBar));
       expect(nav.selectedIndex, 2);
 
-      await tester.tap(find.text('1').last);
+      await tester.tap(find.descendant(
+          of: find.byType(MonthGrid), matching: find.text('1')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('BORRAR SERVICIO'));
       await tester.pumpAndSettle();
@@ -228,13 +235,52 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('CARLOS'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('1').last);
+    await tester.tap(
+        find.descendant(of: find.byType(MonthGrid), matching: find.text('1')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('MC'));
+    await tester.tap(find.widgetWithText(FilledButton, 'MC'));
     await tester.pumpAndSettle();
     expect(repo.writes, isEmpty);
     expect(find.textContaining('No se ha podido guardar'), findsOneWidget);
     expect(find.text('MC', findRichText: true), findsNothing);
+    expect(repo.loads.length, 1);
+    repo.failWrite = false;
+    await tester.tap(
+        find.descendant(of: find.byType(MonthGrid), matching: find.text('1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'MC'));
+    await tester.pumpAndSettle();
+    expect(repo.writes.single.$1, 'u2');
+    expect(repo.writes.single.$3, 'MC');
+    expect(find.text('MC', findRichText: true), findsOneWidget);
+    expect(repo.loads.length, 1);
+  });
+
+  testWidgets('post-save tap guard expires and navigation works again',
+      (tester) async {
+    final repo = CalendarRepository();
+    await tester.pumpWidget(MaterialApp(
+        home: CalendarScreen(repository: repo, onLogout: () async {})));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('CARLOS'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+        find.descendant(of: find.byType(MonthGrid), matching: find.text('1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'MC'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('DAVID'));
+    await tester.pump();
+    expect(
+        tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+        1);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.text('DAVID'));
+    await tester.pumpAndSettle();
+    expect(
+        tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+        2);
+    expect(repo.writes.length, 1);
     expect(repo.loads.length, 1);
   });
 }
