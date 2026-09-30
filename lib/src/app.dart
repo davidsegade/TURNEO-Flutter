@@ -39,6 +39,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   late Future<MonthData> data;
   String? selectedUserId;
   bool saving = false;
+  bool openingSheet = false;
   Timer? navigationUnlock;
   bool navigationLocked = false;
   @override
@@ -66,7 +67,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Future<void> _editService(MonthData d, AppUser user, DateTime date) async {
-    if (saving || !repo.canEdit(user.id)) return;
+    if (saving || openingSheet || !repo.canEdit(user.id)) return;
+    openingSheet = true;
+    navigationUnlock?.cancel();
+    navigationLocked = true;
     try {
       final services = await repo.loadServices();
       if (!mounted) return;
@@ -122,7 +126,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   ]),
                 ))),
       );
-      if (picked == null) return;
+      if (picked == null) {
+        if (mounted) {
+          setState(() {
+            navigationUnlock?.cancel();
+            navigationUnlock = Timer(const Duration(milliseconds: 700), () {
+              if (mounted) setState(() => navigationLocked = false);
+            });
+          });
+        }
+        return;
+      }
       setState(() {
         saving = true;
         selectedUserId = user.id;
@@ -146,12 +160,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 'No se ha podido guardar o cargar el servicio. Comprueba la conexión y tus permisos.')));
       }
     } finally {
+      openingSheet = false;
       if (mounted) {
         setState(() {
           saving = false;
           navigationUnlock?.cancel();
           navigationUnlock = Timer(const Duration(milliseconds: 700), () {
-            navigationLocked = false;
+            if (mounted) setState(() => navigationLocked = false);
           });
         });
       }
@@ -235,7 +250,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         user: selected,
                         onEdit: selected != null &&
                                 repo.canEdit(selected.id) &&
-                                !saving
+                                !saving &&
+                                !openingSheet
                             ? (date) => _editService(d, selected, date)
                             : null)),
               ]);
@@ -258,12 +274,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               users.indexWhere((u) => u.id == selectedUserId);
                           return i < 0 ? 0 : i + 1;
                         })(),
-                  onDestinationSelected: saving
+                  onDestinationSelected: (saving || navigationLocked)
                       ? null
                       : (i) {
-                          if (navigationLocked) {
-                            return;
-                          }
                           setState(() {
                             selectedUserId = i == 0 ? null : users[i - 1].id;
                           });
