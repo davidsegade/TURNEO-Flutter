@@ -33,6 +33,9 @@ jobs:
         run: flutter analyze
       - name: Test
         run: flutter test
+
+      - name: Interaction regression gate
+        run: flutter test test/calendar_test.dart --reporter expanded
       - name: Supabase configuration preflight
         env:
           SUPABASE_URL: https://iiaxbriosudkmhsqvksn.supabase.co
