@@ -91,7 +91,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               backgroundColor: d.serviceColor(s.code),
                               foregroundColor: d.serviceTextColor(s.code),
                               padding: const EdgeInsets.all(6)),
-                          onPressed: () => Navigator.pop(context, s.code),
+                          onPressed: () {
+                            setState(() {
+                              saving = true;
+                              selectedUserId = user.id;
+                            });
+                            Navigator.pop(context, s.code);
+                          },
                           child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -108,18 +114,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       },
                     )),
                     TextButton(
-                        onPressed: () => Navigator.pop(context, '__CLEAR__'),
+                        onPressed: () {
+                          setState(() {
+                            saving = true;
+                            selectedUserId = user.id;
+                          });
+                          Navigator.pop(context, '__CLEAR__');
+                        },
                         child: const Text('BORRAR SERVICIO')),
                   ]),
                 ))),
       );
       if (picked == null) return;
-      // Lock both editing and the visible user before the modal finishes closing.
-      // This prevents the closing tap from ever changing the bottom navigation.
-      setState(() {
-        saving = true;
-        selectedUserId = user.id;
-      });
       final saved = await repo.saveService(
           user.id, date, picked == '__CLEAR__' ? null : picked);
       if (mounted &&
@@ -129,8 +135,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           selectedUserId = user.id;
           data = Future.value(d.withAssignment(user.id, date, saved));
         });
-        _refreshVisibleMonthLater(d.month, user.id);
-      }
+       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -142,20 +147,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
   }
 
-  void _refreshVisibleMonthLater(DateTime editedMonth, String editedUserId) {
-    Future<void>.delayed(const Duration(seconds: 2), () async {
-      if (!mounted || month.year != editedMonth.year || month.month != editedMonth.month) return;
-      try {
-        final refreshed = await repo.loadMonth(month);
-        if (mounted && month.year == editedMonth.year && month.month == editedMonth.month) {
-          setState(() {
-            selectedUserId = editedUserId;
-            data = Future.value(refreshed);
-          });
-        }
-      } catch (_) {}
-    });
-  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
