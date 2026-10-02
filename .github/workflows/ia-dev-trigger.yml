@@ -16,15 +16,17 @@ jobs:
   check:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.issue.labels.*.name, 'ia-dev')
     runs-on: ubuntu-24.04
+    outputs:
+      issue: ${{ steps.validate.outputs.issue }}
     steps:
       - name: Validate issue
+        id: validate
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "issue=${{ github.event.inputs.issue }}" >> $GITHUB_OUTPUT
           else
             echo "issue=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
           fi
-        id: validate
 
   dispatch:
     needs: check
