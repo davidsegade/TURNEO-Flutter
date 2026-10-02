@@ -51,6 +51,17 @@ runs:
       run: npm run test:architecture
       working-directory: ia-dev
       shell: bash
+    - name: Debug PATH and node
+      run: |
+        echo "=== DEBUG INFO ==="
+        echo "PATH=$PATH"
+        command -v node || true
+        node --version || true
+        pwd
+        ls -la
+        ls -la ia-dev/controller/github.mjs || true
+        echo "=== END DEBUG ==="
+      shell: bash
     - name: Prepare
       id: prepare
       run: |
