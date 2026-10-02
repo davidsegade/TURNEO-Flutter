@@ -31,11 +31,257 @@ jobs:
             echo "issue=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
           fi
 
-  execute:
+  prepare:
     needs: check
-    uses: davidsegade/ia-dev-architecture-lab/.github/workflows/ia-dev-execute-call.yml@main
-    with:
-      target-repo: davidsegade/TURNEO-Flutter
-      issue-number: ${{ needs.check.outputs.issue }}
-    secrets:
-      target-token: ${{ secrets.GITHUB_TOKEN }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    outputs:
+      task: ${{ steps.prepare.outputs.task }}
+      issue: ${{ steps.prepare.outputs.issue }}
+      base: ${{ steps.prepare.outputs.base }}
+      skip: ${{ steps.prepare.outputs.skip }}
+      feedback: ${{ steps.prepare.outputs.feedback }}
+      target-config: ${{ steps.prepare.outputs.target-config }}
+    steps:
+      - name: Checkout ia-dev-architecture-lab
+        uses: actions/checkout@v4
+        with:
+          repository: davidsegade/ia-dev-architecture-lab
+          ref: main
+          path: ia-dev
+          persist-credentials: false
+      - name: Checkout TURNEO-Flutter at base
+        uses: actions/checkout@v4
+        with:
+          repository: davidsegade/TURNEO-Flutter
+          ref: main
+          path: target
+          persist-credentials: false
+      - name: Prepare event payload
+        run: |
+          cat > $RUNNER_TEMP/event.json <<'EOF'
+          {
+            "event": "workflow_dispatch",
+            "inputs": {
+              "issue": "${{ needs.check.outputs.issue }}",
+              "automatic": "false"
+            }
+          }
+          EOF
+      - name: IA DEV Prepare
+        uses: ./.github/actions/ia-dev-prepare
+        with:
+          target-repo: davidsegade/TURNEO-Flutter
+          target-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ needs.check.outputs.issue }}
+          automatic: false
+        id: prepare
+
+  execute:
+    needs: prepare
+    if: needs.prepare.outputs.skip == 'false'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout ia-dev-architecture-lab
+        uses: actions/checkout@v4
+        with:
+          repository: davidsegade/ia-dev-architecture-lab
+          ref: main
+          path: ia-dev
+          persist-credentials: false
+      - name: Checkout TURNEO-Flutter at base SHA
+        uses: actions/checkout@v4
+        with:
+          repository: davidsegade/TURNEO-Flutter
+          ref: ${{ needs.prepare.outputs.base }}
+          path: target
+          persist-credentials: false
+      - name: IA DEV Execute
+        uses: ./.github/actions/ia-dev-execute
+        with:
+          task: ${{ needs.prepare.outputs.task }}
+          target-repo: davidsegade/TURNEO-Flutter
+          target-token: ${{ secrets.GITHUB_TOKEN }}
+          feedback-base64: ${{ needs.prepare.outputs.feedback }}
+          allowed-paths: ${{ fromJson(needs.prepare.outputs.target-config).allowed_paths }}
+          acceptance-command: ${{ fromJson(needs.prepare.outputs.target-config).acceptance_command }}
+          build-command: ${{ fromJson(needs.prepare.outputs.target-config).build_command }}
+          workspace-root: ${{ fromJson(needs.prepare.outputs.target-config).workspace_root }}
+
+  verify:
+    needs: [prepare, execute]
+    if: needs.prepare.outputs.skip == 'false'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      digest: ${{ steps.verify.outputs.digest }}
+    steps:
+      - name: Checkout ia-dev-architecture-lab
+        uses: actions/checkout@v4
+        with:
+          repository: davidsegade/ia-dev-architecture-lab
+          ref: main
+          path: ia-dev
+          persist-credentials: false
+      - name: Checkout TURNEO-Flutter at base SHA
+        uses: actions/checkout@v4
+        with:
+          repository: davidsegade/TURNEO-Flutter
+          ref: ${{ needs.prepare.outputs.base }}
+          path: target
+          persist-credentials: false
+      - name: Download execution artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: execution
+          path: target/bundle
+      - name: IA DEV Verify
+        uses: ./.github/actions/ia-dev-verify
+        with:
+          task: ${{ needs.prepare.outputs.task }}
+          target-repo: davidsegade/TURNEO-Flutter
+          target-token: ${{ secrets.GITHUB_TOKEN }}
+          base-sha: ${{ needs.prepare.outputs.base }}
+          allowed-paths: ${{ fromJson(needs.prepare.outputs.target-config).allowed_paths }}
+          acceptance-command: ${{ fromJson(needs.prepare.outputs.target-config).acceptance_command }}
+          build-command: ${{ fromJson(needs.prepare.outputs.target-config).build_command }}
+          workspace-root: ${{ fromJson(needs.prepare.outputs.target-config).workspace_root }}
+        id: verify
+      - name: Upload acceptance artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: acceptance
+          path: target/bundle/acceptance-result.json
+          retention-days: 7
+
+  review:
+    needs: [prepare, execute, verify]
+    if: needs.prepare.outputs.skip == 'false'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout ia-dev-architecture-lab
+        uses: actions/checkout@v4
+        with:
+          repository: davidsegade/ia-dev-architecture-lab
+          ref: main
+          path: ia-dev
+          persist-credentials: false
+      - name: Checkout TURNEO-Flutter at base SHA
+        uses: actions/checkout@v4
+        with:
+          repository: davidsegade/TURNEO-Flutter
+          ref: ${{ needs.prepare.outputs.base }}
+          path: target
+          persist-credentials: false
+      - name: Download execution artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: execution
+          path: target/bundle
+      - name: IA DEV Review
+        uses: ./.github/actions/ia-dev-review
+        with:
+          task: ${{ needs.prepare.outputs.task }}
+          target-repo: davidsegade/TURNEO-Flutter
+          target-token: ${{ secrets.GITHUB_TOKEN }}
+          base-sha: ${{ needs.prepare.outputs.base }}
+          allowed-paths: ${{ fromJson(needs.prepare.outputs.target-config).allowed_paths }}
+          acceptance-command: ${{ fromJson(needs.prepare.outputs.target-config).acceptance_command }}
+          build-command: ${{ fromJson(needs.prepare.outputs.target-config).build_command }}
+          workspace-root: ${{ fromJson(needs.prepare.outputs.target-config).workspace_root }}
+
+  publish:
+    needs: [prepare, execute, verify, review]
+    if: needs.prepare.outputs.skip == 'false'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      statuses: write
+    outputs:
+      pr-url: ${{ steps.publish.outputs.pr-url }}
+      pr-sha: ${{ steps.publish.outputs.pr-sha }}
+    steps:
+      - name: Checkout ia-dev-architecture-lab
+        uses: actions/checkout@v4
+        with:
+          repository: davidsegade/ia-dev-architecture-lab
+          ref: main
+          path: ia-dev
+          persist-credentials: false
+      - name: Checkout TURNEO-Flutter at base SHA (with write)
+        uses: actions/checkout@v4
+        with:
+          repository: davidsegade/TURNEO-Flutter
+          ref: ${{ needs.prepare.outputs.base }}
+          path: target
+          persist-credentials: true
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*'
+          merge-multiple: true
+          path: target/bundle
+      - name: IA DEV Publish
+        uses: ./.github/actions/ia-dev-publish
+        with:
+          target-repo: davidsegade/TURNEO-Flutter
+          target-token: ${{ secrets.GITHUB_TOKEN }}
+          base-sha: ${{ needs.prepare.outputs.base }}
+          expected-digest: ${{ needs.verify.outputs.digest }}
+          allowed-paths: ${{ fromJson(needs.prepare.outputs.target-config).allowed_paths }}
+          task: ${{ needs.prepare.outputs.task }}
+        id: publish
+      - name: Upload publication artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: publication
+          path: target/bundle/publication.json
+          retention-days: 7
+
+  report-failure:
+    needs: [prepare, execute, verify, review, publish]
+    if: always() && !cancelled() && needs.prepare.result == 'success' && needs.prepare.outputs.skip == 'false' && needs.publish.result != 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+      actions: write
+    steps:
+      - name: Checkout ia-dev-architecture-lab
+        uses: actions/checkout@v4
+        with:
+          repository: davidsegade/ia-dev-architecture-lab
+          ref: main
+          path: ia-dev
+          persist-credentials: false
+      - name: Checkout TURNEO-Flutter at base SHA
+        uses: actions/checkout@v4
+        with:
+          repository: davidsegade/TURNEO-Flutter
+          ref: ${{ needs.prepare.outputs.base }}
+          path: target
+          persist-credentials: false
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: '*'
+          merge-multiple: true
+          path: target/bundle
+      - name: IA DEV Failure
+        uses: ./.github/actions/ia-dev-failure
+        with:
+          target-repo: davidsegade/TURNEO-Flutter
+          target-token: ${{ secrets.GITHUB_TOKEN }}
+          base-sha: ${{ needs.prepare.outputs.base }}
+          issue-number: ${{ needs.check.outputs.issue }}
+          skip: ${{ needs.prepare.outputs.skip }}
+          prepare-result: ${{ needs.prepare.result }}
+          publish-result: ${{ needs.publish.result }}
