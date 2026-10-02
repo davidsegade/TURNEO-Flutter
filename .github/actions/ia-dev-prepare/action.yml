@@ -49,10 +49,13 @@ runs:
         node-version: '24'
     - name: Run architecture tests
       run: npm run test:architecture
+      shell: bash
       working-directory: ia-dev
+      shell: bash
     - name: Prepare
       id: prepare
       run: |
+      shell: bash
         node ia-dev/controller/github.mjs prepare
       shell: bash
       env:
@@ -61,9 +64,11 @@ runs:
         GITHUB_EVENT_PATH: ${{ runner.temp }}/event.json
     - name: Set outputs
       run: |
+      shell: bash
         echo "task=${{ steps.prepare.outputs.task }}" >> $GITHUB_OUTPUT
         echo "issue=${{ steps.prepare.outputs.issue }}" >> $GITHUB_OUTPUT
         echo "base=${{ steps.prepare.outputs.base }}" >> $GITHUB_OUTPUT
         echo "skip=${{ steps.prepare.outputs.skip }}" >> $GITHUB_OUTPUT
         echo "feedback=${{ steps.prepare.outputs.feedback }}" >> $GITHUB_OUTPUT
         echo "target-config=${{ steps.prepare.outputs.target-config }}" >> $GITHUB_OUTPUT
+      shell: bash
