@@ -50,12 +50,12 @@ jobs:
           ref: main
           path: ia-dev
           persist-credentials: false
-      - name: Checkout TURNEO-Flutter at base
+      - name: Checkout TURNEO-Flutter at base (for composite actions)
         uses: actions/checkout@v4
         with:
           repository: davidsegade/TURNEO-Flutter
           ref: main
-          path: target
+          path: .
           persist-credentials: false
       - name: Prepare event payload
         run: |
