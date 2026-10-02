@@ -9,6 +9,9 @@ on:
         required: true
         type: string
 
+env:
+  CONFIG_PATH: ia-dev/config/repositories.yml
+
 permissions:
   contents: write
   pull-requests: write
@@ -76,8 +79,6 @@ jobs:
           issue-number: ${{ needs.check.outputs.issue }}
           automatic: false
         id: prepare
-        env:
-          CONFIG_PATH: ia-dev/config/repositories.yml
 
   execute:
     needs: prepare
@@ -113,10 +114,10 @@ jobs:
           target-repo: davidsegade/TURNEO-Flutter
           target-token: ${{ secrets.GITHUB_TOKEN }}
           feedback-base64: ${{ needs.prepare.outputs.feedback }}
-          allowed-paths: ${{ fromJson(needs.prepare.outputs.target-config).allowed_paths }}
-          acceptance-command: ${{ fromJson(needs.prepare.outputs.target-config).acceptance_command }}
-          build-command: ${{ fromJson(needs.prepare.outputs.target-config).build_command }}
-          workspace-root: ${{ fromJson(needs.prepare.outputs.target-config).workspace_root }}
+          allowed-paths: '${{ fromJson(needs.prepare.outputs.target-config).allowed_paths  }}'
+          acceptance-command: '${{ fromJson(needs.prepare.outputs.target-config).acceptance_command  }}'
+          build-command: '${{ fromJson(needs.prepare.outputs.target-config).build_command  }}'
+          workspace-root: '${{ fromJson(needs.prepare.outputs.target-config).workspace_root  }}'
 
   verify:
     needs: [prepare, execute]
@@ -159,10 +160,10 @@ jobs:
           target-repo: davidsegade/TURNEO-Flutter
           target-token: ${{ secrets.GITHUB_TOKEN }}
           base-sha: ${{ needs.prepare.outputs.base }}
-          allowed-paths: ${{ fromJson(needs.prepare.outputs.target-config).allowed_paths }}
-          acceptance-command: ${{ fromJson(needs.prepare.outputs.target-config).acceptance_command }}
-          build-command: ${{ fromJson(needs.prepare.outputs.target-config).build_command }}
-          workspace-root: ${{ fromJson(needs.prepare.outputs.target-config).workspace_root }}
+          allowed-paths: '${{ fromJson(needs.prepare.outputs.target-config).allowed_paths  }}'
+          acceptance-command: '${{ fromJson(needs.prepare.outputs.target-config).acceptance_command  }}'
+          build-command: '${{ fromJson(needs.prepare.outputs.target-config).build_command  }}'
+          workspace-root: '${{ fromJson(needs.prepare.outputs.target-config).workspace_root  }}'
         id: verify
       - name: Upload acceptance artifact
         if: always()
@@ -211,10 +212,10 @@ jobs:
           target-repo: davidsegade/TURNEO-Flutter
           target-token: ${{ secrets.GITHUB_TOKEN }}
           base-sha: ${{ needs.prepare.outputs.base }}
-          allowed-paths: ${{ fromJson(needs.prepare.outputs.target-config).allowed_paths }}
-          acceptance-command: ${{ fromJson(needs.prepare.outputs.target-config).acceptance_command }}
-          build-command: ${{ fromJson(needs.prepare.outputs.target-config).build_command }}
-          workspace-root: ${{ fromJson(needs.prepare.outputs.target-config).workspace_root }}
+          allowed-paths: '${{ fromJson(needs.prepare.outputs.target-config).allowed_paths  }}'
+          acceptance-command: '${{ fromJson(needs.prepare.outputs.target-config).acceptance_command  }}'
+          build-command: '${{ fromJson(needs.prepare.outputs.target-config).build_command  }}'
+          workspace-root: '${{ fromJson(needs.prepare.outputs.target-config).workspace_root  }}'
 
   publish:
     needs: [prepare, execute, verify, review]
@@ -264,7 +265,7 @@ jobs:
           target-token: ${{ secrets.GITHUB_TOKEN }}
           base-sha: ${{ needs.prepare.outputs.base }}
           expected-digest: ${{ needs.verify.outputs.digest }}
-          allowed-paths: ${{ fromJson(needs.prepare.outputs.target-config).allowed_paths }}
+          allowed-paths: '${{ fromJson(needs.prepare.outputs.target-config).allowed_paths  }}'
           task: ${{ needs.prepare.outputs.task }}
         id: publish
       - name: Upload publication artifact
