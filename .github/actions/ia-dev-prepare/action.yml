@@ -51,7 +51,6 @@ runs:
       run: npm run test:architecture
       shell: bash
       working-directory: ia-dev
-      shell: bash
     - name: Prepare
       id: prepare
       run: |
@@ -71,4 +70,3 @@ runs:
         echo "skip=${{ steps.prepare.outputs.skip }}" >> $GITHUB_OUTPUT
         echo "feedback=${{ steps.prepare.outputs.feedback }}" >> $GITHUB_OUTPUT
         echo "target-config=${{ steps.prepare.outputs.target-config }}" >> $GITHUB_OUTPUT
-      shell: bash
