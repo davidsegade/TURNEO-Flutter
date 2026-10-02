@@ -10,10 +10,7 @@ on:
         type: string
 
 permissions:
-  contents: write
-  pull-requests: write
-  issues: write
-  statuses: write
+  contents: read
 
 jobs:
   check:
@@ -29,12 +26,17 @@ jobs:
           fi
         id: validate
 
-  execute:
+  dispatch:
     needs: check
     if: needs.check.outputs.issue != ''
-    uses: davidsegade/ia-dev-architecture-lab/.github/workflows/ia-dev-execute.yml@0e991cc70b153fc08dc92db2d8042796a6789cab
-    with:
-      target-repo: davidsegade/TURNEO-Flutter
-      issue-number: ${{ needs.check.outputs.issue }}
-    secrets:
-      target-token: ${{ secrets.GITHUB_TOKEN }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Dispatch IA DEV workflow
+        run: |
+          gh api -X POST repos/davidsegade/ia-dev-architecture-lab/actions/workflows/ia-dev-execute.yml/dispatches \
+            -f ref=main \
+            -f "inputs[target-repo]=davidsegade/TURNEO-Flutter" \
+            -f "inputs[issue-number]=${{ needs.check.outputs.issue }}" \
+            -f "inputs[automatic]=false"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
