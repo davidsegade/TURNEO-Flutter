@@ -115,6 +115,7 @@ jobs:
           target-token: ${{ secrets.GITHUB_TOKEN }}
           feedback-base64: ${{ needs.prepare.outputs.feedback }}
           allowed-paths: "${{ join(fromJson(needs.prepare.outputs.target-config).allowed_paths, ',') }}"
+          protected-paths: "${{ join(fromJson(needs.prepare.outputs.target-config).protected_paths, ',') }}"
           acceptance-command: '${{ fromJson(needs.prepare.outputs.target-config).acceptance_command  }}'
           build-command: '${{ fromJson(needs.prepare.outputs.target-config).build_command  }}'
           workspace-root: '${{ fromJson(needs.prepare.outputs.target-config).workspace_root  }}'
@@ -161,6 +162,7 @@ jobs:
           target-token: ${{ secrets.GITHUB_TOKEN }}
           base-sha: ${{ needs.prepare.outputs.base }}
           allowed-paths: "${{ join(fromJson(needs.prepare.outputs.target-config).allowed_paths, ',') }}"
+          protected-paths: "${{ join(fromJson(needs.prepare.outputs.target-config).protected_paths, ',') }}"
           acceptance-command: '${{ fromJson(needs.prepare.outputs.target-config).acceptance_command  }}'
           build-command: '${{ fromJson(needs.prepare.outputs.target-config).build_command  }}'
           workspace-root: '${{ fromJson(needs.prepare.outputs.target-config).workspace_root  }}'
@@ -213,6 +215,7 @@ jobs:
           target-token: ${{ secrets.GITHUB_TOKEN }}
           base-sha: ${{ needs.prepare.outputs.base }}
           allowed-paths: "${{ join(fromJson(needs.prepare.outputs.target-config).allowed_paths, ',') }}"
+          protected-paths: "${{ join(fromJson(needs.prepare.outputs.target-config).protected_paths, ',') }}"
           acceptance-command: '${{ fromJson(needs.prepare.outputs.target-config).acceptance_command  }}'
           build-command: '${{ fromJson(needs.prepare.outputs.target-config).build_command  }}'
           workspace-root: '${{ fromJson(needs.prepare.outputs.target-config).workspace_root  }}'
@@ -266,6 +269,7 @@ jobs:
           base-sha: ${{ needs.prepare.outputs.base }}
           expected-digest: ${{ needs.verify.outputs.digest }}
           allowed-paths: "${{ join(fromJson(needs.prepare.outputs.target-config).allowed_paths, ',') }}"
+          protected-paths: "${{ join(fromJson(needs.prepare.outputs.target-config).protected_paths, ',') }}"
           task: ${{ needs.prepare.outputs.task }}
         id: publish
       - name: Upload publication artifact
