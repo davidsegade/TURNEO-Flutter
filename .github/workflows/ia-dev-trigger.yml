@@ -32,7 +32,7 @@ jobs:
   execute:
     needs: check
     if: needs.check.outputs.issue != ''
-    uses: davidsegade/ia-dev-architecture-lab/.github/workflows/ia-dev-execute.yml@0e991cc
+    uses: davidsegade/ia-dev-architecture-lab/.github/workflows/ia-dev-execute.yml@0e991cc70b153fc08dc92db2d8042796a6789cab
     with:
       target-repo: davidsegade/TURNEO-Flutter
       issue-number: ${{ needs.check.outputs.issue }}
