@@ -28,13 +28,13 @@ jobs:
 
   dispatch:
     needs: check
-    if: needs.check.outputs.issue != ''
     runs-on: ubuntu-24.04
     steps:
       - name: Debug check output
         run: |
           echo "Check output issue: '${{ needs.check.outputs.issue }}'"
       - name: Dispatch IA DEV workflow
+        if: needs.check.outputs.issue != ''
         run: |
           gh api -X POST repos/davidsegade/ia-dev-architecture-lab/actions/workflows/ia-dev-execute.yml/dispatches \
             -f ref=main \
