@@ -10,7 +10,10 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
+  issues: write
+  statuses: write
 
 jobs:
   check:
@@ -29,7 +32,7 @@ jobs:
   execute:
     needs: check
     if: needs.check.outputs.issue != ''
-    uses: davidsegade/ia-dev-architecture-lab/.github/workflows/ia-dev-execute.yml@57e39eb3a04f16df0a7c7e4f1ad2bc93dea3034b
+    uses: davidsegade/ia-dev-architecture-lab/.github/workflows/ia-dev-execute.yml@0e991cc
     with:
       target-repo: davidsegade/TURNEO-Flutter
       issue-number: ${{ needs.check.outputs.issue }}
