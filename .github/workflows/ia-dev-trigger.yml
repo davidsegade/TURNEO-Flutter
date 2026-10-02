@@ -33,7 +33,7 @@ jobs:
 
   execute:
     needs: check
-    uses: davidsegade/ia-dev-architecture-lab/.github/workflows/ia-dev-execute.yml@38f48a53e8253ebc05172b4d0019e1b91f9d83b7
+    uses: davidsegade/ia-dev-architecture-lab/.github/workflows/ia-dev-execute.yml@be7905978a8ae4ad520af981944725e7e460ef60
     with:
       target-repo: davidsegade/TURNEO-Flutter
       issue-number: ${{ needs.check.outputs.issue }}
