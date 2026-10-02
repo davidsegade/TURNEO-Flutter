@@ -85,6 +85,13 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
+      - name: Checkout TURNEO-Flutter (workspace root, for local composite actions)
+        uses: actions/checkout@v4
+        with:
+          repository: davidsegade/TURNEO-Flutter
+          ref: main
+          path: .
+          persist-credentials: false
       - name: Checkout ia-dev-architecture-lab
         uses: actions/checkout@v4
         with:
@@ -119,6 +126,13 @@ jobs:
     outputs:
       digest: ${{ steps.verify.outputs.digest }}
     steps:
+      - name: Checkout TURNEO-Flutter (workspace root, for local composite actions)
+        uses: actions/checkout@v4
+        with:
+          repository: davidsegade/TURNEO-Flutter
+          ref: main
+          path: .
+          persist-credentials: false
       - name: Checkout ia-dev-architecture-lab
         uses: actions/checkout@v4
         with:
@@ -164,6 +178,13 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
+      - name: Checkout TURNEO-Flutter (workspace root, for local composite actions)
+        uses: actions/checkout@v4
+        with:
+          repository: davidsegade/TURNEO-Flutter
+          ref: main
+          path: .
+          persist-credentials: false
       - name: Checkout ia-dev-architecture-lab
         uses: actions/checkout@v4
         with:
@@ -209,6 +230,13 @@ jobs:
       pr-url: ${{ steps.publish.outputs.pr-url }}
       pr-sha: ${{ steps.publish.outputs.pr-sha }}
     steps:
+      - name: Checkout TURNEO-Flutter (workspace root, for local composite actions)
+        uses: actions/checkout@v4
+        with:
+          repository: davidsegade/TURNEO-Flutter
+          ref: main
+          path: .
+          persist-credentials: false
       - name: Checkout ia-dev-architecture-lab
         uses: actions/checkout@v4
         with:
@@ -256,6 +284,13 @@ jobs:
       issues: write
       actions: write
     steps:
+      - name: Checkout TURNEO-Flutter (workspace root, for local composite actions)
+        uses: actions/checkout@v4
+        with:
+          repository: davidsegade/TURNEO-Flutter
+          ref: main
+          path: .
+          persist-credentials: false
       - name: Checkout ia-dev-architecture-lab
         uses: actions/checkout@v4
         with:
