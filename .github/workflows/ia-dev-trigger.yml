@@ -10,7 +10,7 @@ on:
         type: string
 
 env:
-  CONFIG_PATH: ia-dev/config/repositories.yml
+  CONFIG_PATH: ${{ github.workspace }}/ia-dev/config/repositories.yml
 
 permissions:
   contents: write
