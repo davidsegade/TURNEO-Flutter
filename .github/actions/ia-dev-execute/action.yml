@@ -53,12 +53,10 @@ runs:
         node-version: '24'
     - name: Install OpenCode
       run: npm install --prefix "$RUNNER_TEMP/opencode" --no-audit --no-fund opencode-ai@1.18.34
-      shell: bash
       working-directory: target
     - name: Execute agent
       id: execute
       run: |
-      shell: bash
         node ia-dev/controller/agent.mjs write "${{ inputs.task }}"
       shell: bash
       env:
