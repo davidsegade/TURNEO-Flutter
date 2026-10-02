@@ -127,6 +127,15 @@ jobs:
           build-command: '${{ fromJson(needs.prepare.outputs.target-config).build_command  }}'
           workspace-root: '${{ fromJson(needs.prepare.outputs.target-config).workspace_root  }}'
         id: verify
+
+  review:
+    needs: [prepare, execute, verify]
+    if: needs.prepare.outputs.skip == 'false' && needs.verify.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      approved: ${{ steps.review.outputs.approved }}
+    steps:
       - name: Checkout TURNEO-Flutter (workspace root, for local composite actions)
         uses: actions/checkout@v4
         with:
@@ -149,7 +158,7 @@ jobs:
 
   publish:
     needs: [prepare, execute, verify, review]
-    if: needs.prepare.outputs.skip == 'false'
+    if: needs.prepare.outputs.skip == 'false' && needs.review.outputs.approved == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -179,6 +188,18 @@ jobs:
           protected-paths: "${{ join(fromJson(needs.prepare.outputs.target-config).protected_paths, ',') }}"
           task: ${{ needs.prepare.outputs.task }}
         id: publish
+
+  report-failure:
+    if: always() && !cancelled() && needs.prepare.result == 'success' && needs.prepare.outputs.skip == 'false' && needs.publish.result != 'success'
+    needs: [prepare, check, execute, verify, review, publish]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      statuses: write
+    steps:
       - name: Checkout TURNEO-Flutter (workspace root, for local composite actions)
         uses: actions/checkout@v4
         with:
