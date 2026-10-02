@@ -76,6 +76,8 @@ jobs:
           issue-number: ${{ needs.check.outputs.issue }}
           automatic: false
         id: prepare
+        env:
+          CONFIG_PATH: ia-dev/config/repositories.yml
 
   execute:
     needs: prepare
