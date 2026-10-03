@@ -46,7 +46,7 @@ jobs:
           path: engine
           persist-credentials: false
       - name: Validate caller structure
-        run: node engine/controller/check-caller.mjs caller/${{ github.workflow }}
+        run: node engine/controller/check-caller.mjs caller/.github/workflows
         shell: bash
 
   prepare:
