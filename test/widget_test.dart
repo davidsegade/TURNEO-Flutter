@@ -11,4 +11,8 @@ void main() {
         holidays: {});
     expect(d.title, 'SEPTIEMBRE 2026');
   });
+
+  test('dummy test always passes', () {
+    expect(1 + 1, 2);
+  });
 }
