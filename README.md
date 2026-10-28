@@ -13,10 +13,33 @@ Arquitectura conservada:
 - Pantalla General mensual.
 - Lectura de `planning` por mes, no de todo el histórico.
 - Colores leídos del catálogo `services`.
-- Orden visual: Carlos, David, Alejandro, Juan.
+- Roster activo local por ID: `u1` (David, administrador), `u4` (Juan) y `u5`
+  (Adrián); `u2` (Carlos) y `u3` (Alejandro) quedan fuera de la app, sin
+  borrar sus históricos 2026. Aunque Supabase los mantenga activos para 2026,
+  la app los rechaza por whitelist.
+- El registro sólo ofrece `u5` Adrián y `u4` Juan, con `u5` seleccionado por
+  defecto. `u5` usa `Santa Eufemia` como identidad Excel/Sheets.
 - Login, recuperación, registro con la función existente y cierre de sesión.
 - Edición del propio cuadrante; el administrador puede editar todos. Supabase aplica RLS.
 - Actualización local de la celda guardada, sin cargar el histórico.
+- Las escrituras de `planning` sólo se permiten en 2027. 2026 permanece
+  disponible para lectura y sus históricos no se borran ni se reescriben.
+- El destino de la auditoría/trigger de Google Sheets para 2027 es
+  `1qL4Wrv9aR-LXlmRME4wMo2-GaVAp3y1jYeqEHT-6_0w`. Flutter no llama a Google
+  Sheets directamente: escribe en Supabase y conserva el flujo Excel -> app y
+  las fórmulas del libro. La configuración remota del trigger queda fuera de
+  este cambio local.
+- La migración Supabase 2027 de `app_users.sheet_name` y `u5` (`display_name =
+  Adrián`, `sheet_name = Santa Eufemia`, `slot = 5`) ya fue aplicada y
+  verificada. `u2/u3` pueden permanecer activos para la operación 2026 del
+  backend, pero no entran en el roster ni en escrituras de la app.
+- El endpoint remoto `shift-register` todavía sólo admite `u2/u3/u4`; el
+  onboarding de `u5` requiere desplegar la versión corregida de esa Edge
+  Function. Ese despliegue queda pendiente y no se realiza desde este repo.
+- La sincronización automática app -> Google Sheets 2027 está en
+  `tool/google_apps_script/turneo_2027_pull.gs`; requiere instalación y
+  credenciales manuales. No se instala ni se ejecuta ningún trigger desde este
+  repositorio.
 
 ## Configuración
 
