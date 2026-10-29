@@ -84,7 +84,8 @@ void main() {
           colors: const {},
           users: users,
           holidays: const {});
-      await tester.pumpWidget(MaterialApp(home: SummaryCards(data: data)));
+      await tester.pumpWidget(MaterialApp(
+          home: Scaffold(body: SummaryCards(data: data))));
       await tester.pumpAndSettle();
 
       final cards = find.byType(Expanded);
