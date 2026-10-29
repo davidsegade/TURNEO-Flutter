@@ -479,8 +479,9 @@ class SummaryCards extends StatelessWidget {
                       ),
                     ),
                   ),
-                )
+                ),
             ],
+          ],
           ),
         );
       });
