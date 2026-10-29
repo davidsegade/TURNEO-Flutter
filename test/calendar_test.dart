@@ -71,7 +71,7 @@ void main() {
     expect(roster.map((user) => user.name), ['DAVID', 'JUAN', 'ADRIÁN']);
   });
 
-  for (final width in [320.0, 390.0]) {
+  for (final width in [320.0, 375.0, 390.0, 430.0]) {
     testWidgets('summary cards share width at $width pixels', (tester) async {
       tester.view.physicalSize = Size(width, 844);
       tester.view.devicePixelRatio = 1;
@@ -97,6 +97,38 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('roster legend and summary cards fill the available row',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final repo = CalendarRepository();
+    await tester.pumpWidget(MaterialApp(
+        home: CalendarScreen(repository: repo, onLogout: () async {})));
+    await tester.pumpAndSettle();
+
+    final legendTexts = [
+      find.text('DAV · DAVID'),
+      find.text('JUA · JUAN'),
+      find.text('ADR · ADRIÁN'),
+    ];
+    final legendY = [
+      for (final finder in legendTexts) tester.getTopLeft(finder).dy,
+    ];
+    expect(legendY[0], legendY[1]);
+    expect(legendY[1], legendY[2]);
+
+    final cards = [
+      for (var i = 0; i < 3; i++) find.byKey(ValueKey('summary-card-$i')),
+    ];
+    final cardY = [for (final finder in cards) tester.getTopLeft(finder).dy];
+    expect(cardY[0], cardY[1]);
+    expect(cardY[1], cardY[2]);
+    expect(tester.takeException(), isNull);
+  });
 
   test('cell patch preserves other users and dates and can clear a cell', () {
     final original = MonthData(
@@ -136,7 +168,7 @@ void main() {
     expect(changed.assignments['u1|2026-09-01'], 'MC');
   });
 
-  for (final width in [320.0, 390.0, 430.0]) {
+  for (final width in [320.0, 375.0, 390.0, 430.0]) {
     testWidgets(
         'mobile calendar $width keeps 7 columns and saves without reload',
         (tester) async {
@@ -198,7 +230,7 @@ void main() {
 
   testWidgets('general layout has no overflow at the supported mobile widths',
       (tester) async {
-    for (final width in [320.0, 390.0, 430.0]) {
+    for (final width in [320.0, 375.0, 390.0, 430.0]) {
       tester.view.physicalSize = Size(width, 844);
       tester.view.devicePixelRatio = 1;
       final repo = CalendarRepository();

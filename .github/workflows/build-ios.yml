@@ -1,0 +1,43 @@
+name: Build Flutter iOS
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.5'
+          cache: true
+      - name: Generate iOS host project
+        run: flutter create --platforms=ios --project-name turneo .
+      - name: Get packages
+        run: flutter pub get
+      - name: Analyze
+        run: flutter analyze
+      - name: Test
+        run: flutter test
+      - name: Supabase configuration preflight
+        env:
+          SUPABASE_URL: https://iiaxbriosudkmhsqvksn.supabase.co
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: python3 tool/check_config.py
+      - name: Build unsigned iOS archive
+        run: flutter build ios --release --no-codesign --dart-define-from-file=build-config.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: turneo-ios-unsigned
+          path: build/ios/iphoneos/Runner.app
+          retention-days: 14
