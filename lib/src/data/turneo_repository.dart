@@ -40,6 +40,7 @@ class TurneoRepository {
   }
 
   bool canEdit(String userId) =>
+      TurneoWritePolicy.activeLocalUserIds.contains(userId) &&
       profile != null && (profile!.role == 'admin' || profile!.id == userId);
 
   Future<List<AppUser>> loadUsers() async {

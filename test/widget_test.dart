@@ -20,6 +20,8 @@ void main() {
         home: LoginScreen(onSignedIn: () {})));
     await tester.tap(find.text('REGISTRO INICIAL'));
     await tester.pump();
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
 
     final options = tester
         .widgetList<DropdownMenuItem<String>>(find.byType(DropdownMenuItem))

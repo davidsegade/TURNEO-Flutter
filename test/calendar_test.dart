@@ -15,7 +15,9 @@ class CalendarRepository implements TurneoRepository {
   @override
   AppUser? profile = users.first;
   @override
-  bool canEdit(String id) => profile?.id == id || profile?.role == 'admin';
+  bool canEdit(String id) =>
+      TurneoWritePolicy.activeLocalUserIds.contains(id) &&
+      (profile?.id == id || profile?.role == 'admin');
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
   final loads = <DateTime>[];
@@ -134,7 +136,10 @@ void main() {
       await tester.tap(find.descendant(
           of: find.byType(MonthGrid), matching: find.text('1')));
       await tester.pumpAndSettle();
-      expect(find.text('BORRAR SERVICIO'), findsNothing);
+      expect(find.text('BORRAR SERVICIO'), findsOneWidget);
+      await tester.tapAt(const Offset(100, 50));
+      await tester.pumpAndSettle();
+      expect(repo.writes.length, 1);
       await tester.tap(find.byIcon(Icons.chevron_right));
       await tester.pumpAndSettle();
       expect(repo.loads.last,
@@ -160,7 +165,7 @@ void main() {
   });
 
   testWidgets('editing David keeps David selected after save', (tester) async {
-    final repo = CalendarRepository()..profile = users[1];
+    final repo = CalendarRepository()..profile = users.first;
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
@@ -175,12 +180,12 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
     final nav = tester.widget<NavigationBar>(find.byType(NavigationBar));
-    expect(nav.selectedIndex, 2);
+    expect(nav.selectedIndex, 1);
   });
 
   testWidgets('editing any user keeps that same user selected after save',
       (tester) async {
-    final repo = CalendarRepository()..profile = users[1];
+    final repo = CalendarRepository()..profile = users.first;
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
@@ -203,7 +208,7 @@ void main() {
   });
 
   testWidgets('changing month keeps the selected user', (tester) async {
-    final repo = CalendarRepository()..profile = users[1];
+    final repo = CalendarRepository()..profile = users.first;
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
@@ -218,7 +223,7 @@ void main() {
   testWidgets(
       'repeated add and clear stays on the same user and writes once per action',
       (tester) async {
-    final repo = CalendarRepository()..profile = users[1];
+    final repo = CalendarRepository()..profile = users.first;
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
@@ -236,7 +241,7 @@ void main() {
       expect(repo.writes.last.$3, 'MC');
       expect(find.text('MC', findRichText: true), findsOneWidget);
       var nav = tester.widget<NavigationBar>(find.byType(NavigationBar));
-      expect(nav.selectedIndex, 2);
+      expect(nav.selectedIndex, 1);
 
       await tester.tap(find.descendant(
           of: find.byType(MonthGrid), matching: find.text('1')));
@@ -248,7 +253,7 @@ void main() {
       expect(repo.writes.last.$3, isNull);
       expect(find.text('MC', findRichText: true), findsNothing);
       nav = tester.widget<NavigationBar>(find.byType(NavigationBar));
-      expect(nav.selectedIndex, 2);
+      expect(nav.selectedIndex, 1);
     }
     expect(repo.loads.length, 1);
   });
@@ -301,7 +306,7 @@ void main() {
         tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
         1);
     await tester.pump(const Duration(seconds: 1));
-    await tester.tap(find.text('DAVID'));
+    await tester.tap(find.text('JUAN'));
     await tester.pumpAndSettle();
     expect(
         tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
@@ -313,7 +318,7 @@ void main() {
   testWidgets(
       'all active users complete repeated add-clear cycles maintaining selected user and exact writes',
       (tester) async {
-    final repo = CalendarRepository()..profile = users[1]; // David (admin)
+    final repo = CalendarRepository()..profile = users.first; // David (admin)
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
@@ -399,7 +404,7 @@ void main() {
   testWidgets(
       'sequence: user -> service -> clear -> another day -> another service',
       (tester) async {
-    final repo = CalendarRepository()..profile = users[1]; // David
+    final repo = CalendarRepository()..profile = users.first; // David
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
@@ -493,7 +498,7 @@ void main() {
 
   testWidgets('sequence: multiple consecutive edits without reload',
       (tester) async {
-    final repo = CalendarRepository()..profile = users[1];
+    final repo = CalendarRepository()..profile = users.first;
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
@@ -510,9 +515,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(repo.writes.length, day);
       expect(repo.writes.last.$1, 'u1');
-      expect(
-          tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
-          2);
+    expect(
+        tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+        1);
     }
 
     expect(repo.loads.length, 1); // No reload occurred
@@ -520,7 +525,7 @@ void main() {
 
   testWidgets('sequence: rapid taps on day do not open multiple bottom sheets',
       (tester) async {
-    final repo = CalendarRepository()..profile = users[1];
+    final repo = CalendarRepository()..profile = users.first;
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
@@ -542,15 +547,15 @@ void main() {
 
     expect(repo.writes.length, 1);
     expect(repo.writes.single.$1, 'u1');
-    expect(
-        tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
-        2);
+      expect(
+          tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+          1);
   });
 
   testWidgets(
       'sequence: closing bottom sheet via barrier or drag does not write and preserves user',
       (tester) async {
-    final repo = CalendarRepository()..profile = users[1];
+    final repo = CalendarRepository()..profile = users.first;
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();

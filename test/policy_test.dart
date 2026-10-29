@@ -27,7 +27,7 @@ void main() {
     expect(roster.singleWhere((user) => user.id == 'u1').role, 'admin');
     expect(roster.singleWhere((user) => user.id == 'u5').syncIdentity,
         'Santa Eufemia');
-    expect(roster.where((user) => user.name == 'Adrián'), hasLength(1));
+    expect(roster.where((user) => user.name == 'ADRIÁN'), hasLength(1));
     expect(roster.map((user) => user.id), isNot(contains('u2')));
     expect(roster.map((user) => user.id), isNot(contains('u3')));
   });

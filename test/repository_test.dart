@@ -145,12 +145,18 @@ void main() {
     await expectLater(
         repo.saveService('u2', DateTime(2026, 9, 1), 'M'), throwsStateError);
     repo.profile = users.first;
-    expect(repo.canEdit('u2'), isTrue);
+    expect(repo.canEdit('u2'), isFalse);
+    expect(repo.canEdit('u3'), isFalse);
+    expect(repo.canEdit('u1'), isTrue);
     await expectLater(
         repo.saveService('u1', DateTime(2026, 9, 1), 'M'), throwsStateError);
     expect(requests, 0);
-    repo.profile = users[1];
-    expect(users.every((u) => repo.canEdit(u.id)), isTrue);
+    repo.profile = users[1]; // Juan can edit only his active ID.
+    expect(repo.canEdit('u4'), isTrue);
+    expect(repo.canEdit('u1'), isFalse);
+    expect(repo.canEdit('u5'), isFalse);
+    expect(repo.canEdit('u2'), isFalse);
+    expect(repo.canEdit('u3'), isFalse);
   });
 
   test('2026 edits are rejected before any HTTP request', () async {
