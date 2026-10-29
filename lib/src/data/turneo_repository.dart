@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'turneo_policy.dart';
 import '../models/turneo_models.dart';
 
 class ServiceOption {
@@ -26,30 +27,31 @@ class TurneoRepository {
     }
     final row = await db
         .from('app_users')
-        .select('local_user_id,display_name,role,slot,color')
+        .select('local_user_id,display_name,role,slot,color,sheet_name')
         .eq('app_id', 'default')
         .eq('auth_uid', uid)
         .eq('active', true)
         .maybeSingle();
-    if (row == null) {
+    if (row == null || activeRoster([AppUser.fromMap(row)]).isEmpty) {
       throw StateError(
           'Este acceso no está asociado a un usuario activo de TURNEO.');
     }
-    return profile = AppUser.fromMap(row);
+    return profile = activeRoster([AppUser.fromMap(row)]).single;
   }
 
   bool canEdit(String userId) =>
+      TurneoWritePolicy.activeLocalUserIds.contains(userId) &&
       profile != null && (profile!.role == 'admin' || profile!.id == userId);
 
   Future<List<AppUser>> loadUsers() async {
     if (_users != null) return _users!;
     final rows = await db
         .from('app_users')
-        .select('local_user_id,display_name,role,slot,color')
+        .select('local_user_id,display_name,role,slot,color,sheet_name')
         .eq('app_id', 'default')
         .eq('active', true)
         .order('slot');
-    return _users = rows.map(AppUser.fromMap).toList();
+    return _users = activeRoster(rows.map(AppUser.fromMap));
   }
 
   Future<List<ServiceOption>> loadServices() async {
@@ -73,6 +75,9 @@ class TurneoRepository {
   // The unique key is the existing planning key; audit triggers feed Sheets.
   Future<String?> saveService(
       String userId, DateTime date, String? serviceCode) async {
+    if (!TurneoWritePolicy.canWrite(date)) {
+      throw StateError('Las ediciones sólo están habilitadas para 2027.');
+    }
     if (!canEdit(userId)) {
       throw StateError('No puedes modificar este cuadrante.');
     }
@@ -111,15 +116,20 @@ class TurneoRepository {
           .lt('holiday_date', isoDate(end)),
       db
           .from('balance_snapshots')
-          .select('user_local_id,das_available,das_generated,df_available,pico_close,pico_manual')
+          .select(
+              'user_local_id,das_available,das_generated,df_available,pico_close,pico_manual')
           .eq('app_id', 'default')
-          .eq('period_id', '${start.year}-${start.month.toString().padLeft(2, '0')}'),
+          .eq('period_id',
+              '${start.year}-${start.month.toString().padLeft(2, '0')}'),
     ]);
+    final activeUsers = results[2] as List<AppUser>;
+    final activeUserIds = activeUsers.map((user) => user.id).toSet();
     final assignments = <String, String>{};
     for (final row in results[0] as List) {
       final code = row['service_code'] as String?;
-      if (code != null && code.isNotEmpty) {
-        assignments['${row['user_local_id']}|${row['work_date']}'] = code;
+      final userId = row['user_local_id'] as String;
+      if (activeUserIds.contains(userId) && code != null && code.isNotEmpty) {
+        assignments['$userId|${row['work_date']}'] = code;
       }
     }
     final services = results[1] as List<ServiceOption>;
@@ -135,13 +145,14 @@ class TurneoRepository {
       },
       balances: {
         for (final row in results[4] as List)
-          row['user_local_id'] as String: BalanceSnapshot(
-            dasAvailable: (row['das_available'] as num?)?.toInt(),
-            dasGenerated: (row['das_generated'] as num?)?.toInt(),
-            dfAvailable: (row['df_available'] as num?)?.toInt(),
-            picoClose: (row['pico_close'] as num?)?.toInt(),
-            picoManual: (row['pico_manual'] as num?)?.toInt(),
-          )
+          if (activeUserIds.contains(row['user_local_id'] as String))
+            row['user_local_id'] as String: BalanceSnapshot(
+              dasAvailable: (row['das_available'] as num?)?.toInt(),
+              dasGenerated: (row['das_generated'] as num?)?.toInt(),
+              dfAvailable: (row['df_available'] as num?)?.toInt(),
+              picoClose: (row['pico_close'] as num?)?.toInt(),
+              picoManual: (row['pico_manual'] as num?)?.toInt(),
+            )
       },
     );
   }

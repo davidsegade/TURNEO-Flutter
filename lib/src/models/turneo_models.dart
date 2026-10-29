@@ -9,19 +9,26 @@ class AppUser {
   final String role;
   final int slot;
   final String color;
+  final String? sheetName;
   const AppUser(
       {required this.id,
       required this.name,
       required this.role,
       required this.slot,
-      required this.color});
+      required this.color,
+      this.sheetName});
   factory AppUser.fromMap(Map<String, dynamic> m) => AppUser(
         id: m['local_user_id'] as String,
         name: (m['display_name'] as String?) ?? 'Usuario',
         role: (m['role'] as String?) ?? 'user',
         slot: (m['slot'] as num?)?.toInt() ?? 99,
         color: (m['color'] as String?) ?? '#94A3B8',
+        sheetName: m['sheet_name'] as String?,
       );
+  /// Identity used by the Excel/Sheets bridge; the visible name is only UI.
+  String get syncIdentity => sheetName?.trim().isNotEmpty == true
+      ? sheetName!.trim()
+      : name;
 }
 
 class BalanceSnapshot {

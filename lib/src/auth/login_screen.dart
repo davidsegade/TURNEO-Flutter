@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../data/turneo_policy.dart';
 
 class LoginScreen extends StatefulWidget {
   final VoidCallback onSignedIn;
@@ -14,7 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final password = TextEditingController();
   final invite = TextEditingController();
   bool registering = false;
-  String localUserId = 'u2';
+  String localUserId = TurneoWritePolicy.registrationLocalUserIds.first;
   bool busy = false;
   String? error;
   String? info;
@@ -28,6 +29,9 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     try {
       if (registering) {
+        if (!TurneoWritePolicy.canRegister(localUserId)) {
+          throw StateError('Ese usuario no está disponible para registro.');
+        }
         final result = await Supabase.instance.client.functions
             .invoke('shift-register', body: {
           'email': email.text.trim(),
@@ -143,10 +147,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         decoration:
                             const InputDecoration(labelText: 'Tu usuario'),
                         items: const [
-                          DropdownMenuItem(value: 'u2', child: Text('Carlos')),
-                          DropdownMenuItem(
-                              value: 'u3', child: Text('Alejandro')),
-                          DropdownMenuItem(value: 'u4', child: Text('Juan'))
+                          DropdownMenuItem(value: 'u4', child: Text('JUAN')),
+                          DropdownMenuItem(value: 'u5', child: Text('ADRIÁN'))
                         ],
                         onChanged: busy
                             ? null

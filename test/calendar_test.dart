@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:turneo/src/app.dart';
+import 'package:turneo/src/data/turneo_policy.dart';
 import 'package:turneo/src/data/turneo_repository.dart';
 import 'package:turneo/src/models/turneo_models.dart';
 
 const users = [
-  AppUser(id: 'u2', name: 'Carlos', role: 'user', slot: 1, color: '#FFFFFF'),
-  AppUser(id: 'u1', name: 'David', role: 'admin', slot: 2, color: '#FFFFFF'),
-  AppUser(id: 'u3', name: 'Alejandro', role: 'user', slot: 3, color: '#FFFFFF'),
-  AppUser(id: 'u4', name: 'Juan', role: 'user', slot: 4, color: '#FFFFFF'),
+  AppUser(id: 'u1', name: 'DAVID', role: 'admin', slot: 2, color: '#FFFFFF'),
+  AppUser(id: 'u4', name: 'JUAN', role: 'user', slot: 4, color: '#FFFFFF'),
+  AppUser(id: 'u5', name: 'ADRIÁN', role: 'user', slot: 5, color: '#FFFFFF'),
 ];
 
 class CalendarRepository implements TurneoRepository {
   @override
   AppUser? profile = users.first;
   @override
-  bool canEdit(String id) => profile?.id == id || profile?.role == 'admin';
+  bool canEdit(String id) =>
+      TurneoWritePolicy.activeLocalUserIds.contains(id) &&
+      (profile?.id == id || profile?.role == 'admin');
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
   final loads = <DateTime>[];
@@ -28,7 +30,7 @@ class CalendarRepository implements TurneoRepository {
         month: month,
         assignments: {},
         colors: {'MC': '#FFFFFF'},
-        users: users,
+        users: activeRoster(users),
         holidays: {},
         hours: {'MC': 7.5});
   }
@@ -86,7 +88,7 @@ void main() {
     expect(changed.assignments['u1|2026-09-01'], 'MC');
   });
 
-  for (final width in [320.0, 390.0]) {
+  for (final width in [320.0, 390.0, 430.0]) {
     testWidgets(
         'mobile calendar $width keeps 7 columns and saves without reload',
         (tester) async {
@@ -104,15 +106,25 @@ void main() {
           (grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount)
               .crossAxisCount,
           7);
-      expect(find.text('CARLOS'), findsOneWidget);
-      await tester.tap(find.text('CARLOS'));
+      expect(find.text('DAVID'), findsOneWidget);
+      expect(find.text('JUAN'), findsOneWidget);
+      expect(find.text('ADRIÁN'), findsOneWidget);
+      expect(find.text('DAV · DAVID'), findsOneWidget);
+      expect(find.text('JUA · JUAN'), findsOneWidget);
+      expect(find.text('ADR · ADRIÁN'), findsOneWidget);
+      expect(find.text('CARLOS'), findsNothing);
+      expect(find.text('ALEJANDRO'), findsNothing);
+      final nav = tester.widget<NavigationBar>(find.byType(NavigationBar));
+      expect(nav.destinations.map((d) => (d as NavigationDestination).label),
+          ['GENERAL', 'DAVID', 'JUAN', 'ADRIÁN']);
+      await tester.tap(find.text('DAVID'));
       await tester.pumpAndSettle();
       await tester.tap(find.descendant(
           of: find.byType(MonthGrid), matching: find.text('1')));
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(FilledButton, 'MC'));
       await tester.pumpAndSettle();
-      expect(repo.writes.single.$1, 'u2');
+      expect(repo.writes.single.$1, 'u1');
       expect(repo.writes.single.$3, 'MC');
       expect(repo.loads.length, 1);
       expect(find.text('MC', findRichText: true), findsOneWidget);
@@ -124,7 +136,10 @@ void main() {
       await tester.tap(find.descendant(
           of: find.byType(MonthGrid), matching: find.text('1')));
       await tester.pumpAndSettle();
-      expect(find.text('BORRAR SERVICIO'), findsNothing);
+      expect(find.text('BORRAR SERVICIO'), findsOneWidget);
+      await tester.tapAt(const Offset(100, 50));
+      await tester.pumpAndSettle();
+      expect(repo.writes.length, 1);
       await tester.tap(find.byIcon(Icons.chevron_right));
       await tester.pumpAndSettle();
       expect(repo.loads.last,
@@ -133,8 +148,24 @@ void main() {
     });
   }
 
+  testWidgets('general layout has no overflow at the supported mobile widths',
+      (tester) async {
+    for (final width in [320.0, 390.0, 430.0]) {
+      tester.view.physicalSize = Size(width, 844);
+      tester.view.devicePixelRatio = 1;
+      final repo = CalendarRepository();
+      await tester.pumpWidget(MaterialApp(
+          home: CalendarScreen(repository: repo, onLogout: () async {})));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull,
+          reason: 'overflow or layout exception at width $width');
+    }
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+  });
+
   testWidgets('editing David keeps David selected after save', (tester) async {
-    final repo = CalendarRepository()..profile = users[1];
+    final repo = CalendarRepository()..profile = users.first;
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
@@ -149,12 +180,12 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
     final nav = tester.widget<NavigationBar>(find.byType(NavigationBar));
-    expect(nav.selectedIndex, 2);
+    expect(nav.selectedIndex, 1);
   });
 
   testWidgets('editing any user keeps that same user selected after save',
       (tester) async {
-    final repo = CalendarRepository()..profile = users[1];
+    final repo = CalendarRepository()..profile = users.first;
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
@@ -177,11 +208,11 @@ void main() {
   });
 
   testWidgets('changing month keeps the selected user', (tester) async {
-    final repo = CalendarRepository()..profile = users[1];
+    final repo = CalendarRepository()..profile = users.first;
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('ALEJANDRO'));
+    await tester.tap(find.text('ADRIÁN'));
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.chevron_right));
     await tester.pumpAndSettle();
@@ -192,7 +223,7 @@ void main() {
   testWidgets(
       'repeated add and clear stays on the same user and writes once per action',
       (tester) async {
-    final repo = CalendarRepository()..profile = users[1];
+    final repo = CalendarRepository()..profile = users.first;
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
@@ -210,7 +241,7 @@ void main() {
       expect(repo.writes.last.$3, 'MC');
       expect(find.text('MC', findRichText: true), findsOneWidget);
       var nav = tester.widget<NavigationBar>(find.byType(NavigationBar));
-      expect(nav.selectedIndex, 2);
+      expect(nav.selectedIndex, 1);
 
       await tester.tap(find.descendant(
           of: find.byType(MonthGrid), matching: find.text('1')));
@@ -222,7 +253,7 @@ void main() {
       expect(repo.writes.last.$3, isNull);
       expect(find.text('MC', findRichText: true), findsNothing);
       nav = tester.widget<NavigationBar>(find.byType(NavigationBar));
-      expect(nav.selectedIndex, 2);
+      expect(nav.selectedIndex, 1);
     }
     expect(repo.loads.length, 1);
   });
@@ -233,7 +264,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('CARLOS'));
+    await tester.tap(find.text('DAVID'));
     await tester.pumpAndSettle();
     await tester.tap(
         find.descendant(of: find.byType(MonthGrid), matching: find.text('1')));
@@ -250,7 +281,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'MC'));
     await tester.pumpAndSettle();
-    expect(repo.writes.single.$1, 'u2');
+    expect(repo.writes.single.$1, 'u1');
     expect(repo.writes.single.$3, 'MC');
     expect(find.text('MC', findRichText: true), findsOneWidget);
     expect(repo.loads.length, 1);
@@ -262,7 +293,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('CARLOS'));
+    await tester.tap(find.text('DAVID'));
     await tester.pumpAndSettle();
     await tester.tap(
         find.descendant(of: find.byType(MonthGrid), matching: find.text('1')));
@@ -275,7 +306,7 @@ void main() {
         tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
         1);
     await tester.pump(const Duration(seconds: 1));
-    await tester.tap(find.text('DAVID'));
+    await tester.tap(find.text('JUAN'));
     await tester.pumpAndSettle();
     expect(
         tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
@@ -285,9 +316,9 @@ void main() {
   });
 
   testWidgets(
-      'all four users (Carlos u2, David u1, Alejandro u3, Juan u4) complete repeated add-clear cycles maintaining selected user and exact writes',
+      'all active users complete repeated add-clear cycles maintaining selected user and exact writes',
       (tester) async {
-    final repo = CalendarRepository()..profile = users[1]; // David (admin)
+    final repo = CalendarRepository()..profile = users.first; // David (admin)
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
@@ -373,13 +404,13 @@ void main() {
   testWidgets(
       'sequence: user -> service -> clear -> another day -> another service',
       (tester) async {
-    final repo = CalendarRepository()..profile = users[1]; // David
+    final repo = CalendarRepository()..profile = users.first; // David
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
 
-    // Seleccionar Alejandro (u3, índice 3)
-    await tester.tap(find.text('ALEJANDRO'));
+    // Seleccionar Adrián (u5, índice 3)
+    await tester.tap(find.text('ADRIÁN'));
     await tester.pumpAndSettle();
     expect(
         tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
@@ -392,7 +423,8 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'MC'));
     await tester.pumpAndSettle();
     expect(repo.writes.length, 1);
-    expect(repo.writes.last, ('u3', DateTime(DateTime.now().year, DateTime.now().month, 1), 'MC'));
+    expect(repo.writes.last,
+        ('u5', DateTime(DateTime.now().year, DateTime.now().month, 1), 'MC'));
     expect(
         tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
         3);
@@ -404,7 +436,8 @@ void main() {
     await tester.tap(find.text('BORRAR SERVICIO'));
     await tester.pumpAndSettle();
     expect(repo.writes.length, 2);
-    expect(repo.writes.last, ('u3', DateTime(DateTime.now().year, DateTime.now().month, 1), null));
+    expect(repo.writes.last,
+        ('u5', DateTime(DateTime.now().year, DateTime.now().month, 1), null));
     expect(
         tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
         3);
@@ -416,7 +449,8 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'MC'));
     await tester.pumpAndSettle();
     expect(repo.writes.length, 3);
-    expect(repo.writes.last, ('u3', DateTime(DateTime.now().year, DateTime.now().month, 2), 'MC'));
+    expect(repo.writes.last,
+        ('u5', DateTime(DateTime.now().year, DateTime.now().month, 2), 'MC'));
     expect(
         tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
         3);
@@ -429,26 +463,26 @@ void main() {
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
 
-    // Seleccionar Juan (u4, índice 4)
+    // Seleccionar Juan (u4, índice 2)
     await tester.tap(find.text('JUAN'));
     await tester.pumpAndSettle();
     expect(
         tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
-        4);
+        2);
 
     // Avanzar mes
     await tester.tap(find.byIcon(Icons.chevron_right));
     await tester.pumpAndSettle();
     expect(
         tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
-        4);
+        2);
 
     // Retroceder mes
     await tester.tap(find.byIcon(Icons.chevron_left));
     await tester.pumpAndSettle();
     expect(
         tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
-        4);
+        2);
 
     // Editar servicio en el mes retornado
     await tester.tap(
@@ -459,12 +493,12 @@ void main() {
     expect(repo.writes.single, ('u4', DateTime(DateTime.now().year, DateTime.now().month, 3), 'MC'));
     expect(
         tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
-        4);
+        2);
   });
 
   testWidgets('sequence: multiple consecutive edits without reload',
       (tester) async {
-    final repo = CalendarRepository()..profile = users[1];
+    final repo = CalendarRepository()..profile = users.first;
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
@@ -481,9 +515,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(repo.writes.length, day);
       expect(repo.writes.last.$1, 'u1');
-      expect(
-          tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
-          2);
+    expect(
+        tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+        1);
     }
 
     expect(repo.loads.length, 1); // No reload occurred
@@ -491,7 +525,7 @@ void main() {
 
   testWidgets('sequence: rapid taps on day do not open multiple bottom sheets',
       (tester) async {
-    final repo = CalendarRepository()..profile = users[1];
+    final repo = CalendarRepository()..profile = users.first;
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
@@ -513,20 +547,20 @@ void main() {
 
     expect(repo.writes.length, 1);
     expect(repo.writes.single.$1, 'u1');
-    expect(
-        tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
-        2);
+      expect(
+          tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+          1);
   });
 
   testWidgets(
       'sequence: closing bottom sheet via barrier or drag does not write and preserves user',
       (tester) async {
-    final repo = CalendarRepository()..profile = users[1];
+    final repo = CalendarRepository()..profile = users.first;
     await tester.pumpWidget(MaterialApp(
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('ALEJANDRO'));
+    await tester.tap(find.text('ADRIÁN'));
     await tester.pumpAndSettle();
     expect(
         tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
@@ -556,7 +590,7 @@ void main() {
 
     // Arrastrar hacia abajo para descartar
     await tester.drag(
-        find.textContaining('Alejandro'), const Offset(0, 400));
+        find.textContaining(' · ADRIÁN'), const Offset(0, 400));
     await tester.pumpAndSettle();
 
     expect(find.text('BORRAR SERVICIO'), findsNothing);
@@ -579,12 +613,12 @@ void main() {
         home: CalendarScreen(repository: repo, onLogout: () async {})));
     await tester.pumpAndSettle();
 
-    // Seleccionar Juan (u4, índice 4)
+    // Seleccionar Juan (u4, índice 2)
     await tester.tap(find.text('JUAN'));
     await tester.pumpAndSettle();
     expect(
         tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
-        4);
+        2);
 
     // Abrir día 1
     await tester.tap(
@@ -597,20 +631,20 @@ void main() {
     await tester.tapAt(const Offset(115, 810));
     await tester.pump();
 
-    // El usuario seleccionado DEBE permanecer en Juan (4), NO saltar a Carlos (1)
+    // El usuario seleccionado debe permanecer en Juan y no saltar a David.
     expect(
         tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
-        4);
+        2);
 
     await tester.pumpAndSettle();
     expect(
         tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
-        4);
+        2);
     expect(repo.writes.single, ('u4', DateTime(DateTime.now().year, DateTime.now().month, 1), null));
 
-    // Tras expirar la guarda (1s), la navegación voluntaria a Carlos funciona con normalidad
+    // Tras expirar la guarda (1s), la navegación voluntaria a David funciona con normalidad
     await tester.pump(const Duration(seconds: 1));
-    await tester.tap(find.text('CARLOS'));
+    await tester.tap(find.text('DAVID'));
     await tester.pumpAndSettle();
     expect(
         tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,

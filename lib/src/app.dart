@@ -232,6 +232,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 SummaryCards(data: d, user: selected),
                 if (selected != null)
                   BalanceStrip(balance: d.balances[selected.id]),
+                if (selected == null) _RosterLegend(users: d.users),
                 Padding(
                     padding: const EdgeInsets.fromLTRB(6, 8, 6, 3),
                     child: Row(
@@ -296,6 +297,41 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   ]);
             }),
       );
+}
+
+class _RosterLegend extends StatelessWidget {
+  final List<AppUser> users;
+  const _RosterLegend({required this.users});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(10, 7, 10, 0),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 2,
+            children: [
+              for (final user in users)
+                Text(
+                  '${_shortName(user.id)} · ${user.name}',
+                  semanticsLabel: '${user.name}, abreviatura ${_shortName(user.id)}',
+                  style: const TextStyle(
+                      color: Color(0xFF9AA9BA),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700),
+                ),
+            ],
+          ),
+        ),
+      );
+
+  static String _shortName(String id) => switch (id) {
+        'u1' => 'DAV',
+        'u4' => 'JUA',
+        'u5' => 'ADR',
+        _ => '???',
+      };
 }
 
 class SummaryCards extends StatelessWidget {
@@ -378,53 +414,76 @@ class SummaryCards extends StatelessWidget {
     ]);
   }
 
-  Widget _cards(List<(String, String, String)> values) => SizedBox(
-      height: 124,
-      child: ListView.separated(
+  Widget _cards(List<(String, String, String)> values) => LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 620 ? 3 : 2;
+        final gap = constraints.maxWidth >= 620 ? 8.0 : 6.0;
+        final contentWidth = constraints.maxWidth - 16;
+        final width =
+            (contentWidth - gap * (columns - 1)) / columns;
+        return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
-          scrollDirection: Axis.horizontal,
-          itemCount: values.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 6),
-          itemBuilder: (context, i) {
-            final x = values[i];
-            return InkWell(
-                onTap: () => showDialog<void>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                            title: Text(x.$1),
-                            content: SingleChildScrollView(
-                                child: Text('${x.$2}\n\n${x.$3}')),
-                            actions: [
-                              TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text('CERRAR'))
-                            ])),
-                child: Container(
-                    width: 150,
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                        color: const Color(0xFF101823),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF1D2A3A))),
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(x.$1,
-                              style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Color(0xFF9AA9BA),
-                                  fontWeight: FontWeight.w700)),
-                          const Spacer(),
-                          Text(x.$2,
-                              style: const TextStyle(
-                                  fontSize: 24, fontWeight: FontWeight.w900)),
-                          Text(x.$3,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  fontSize: 9, color: Color(0xFF9AA9BA)))
-                        ])));
-          }));
+          child: Wrap(
+            spacing: gap,
+            runSpacing: gap,
+            children: [
+              for (final x in values)
+                SizedBox(
+                  width: width,
+                  height: 92,
+                  child: Semantics(
+                    button: true,
+                    label: '${x.$1}: ${x.$2}. ${x.$3}',
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => showDialog<void>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                                  title: Text(x.$1),
+                                  content: SingleChildScrollView(
+                                      child: Text('${x.$2}\n\n${x.$3}')),
+                                  actions: [
+                                    TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('CERRAR'))
+                                  ])),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                            color: const Color(0xFF101823),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: const Color(0xFF1D2A3A))),
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(x.$1,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Color(0xFF9AA9BA),
+                                      fontWeight: FontWeight.w700)),
+                              const Spacer(),
+                              Text(x.$2,
+                                  style: const TextStyle(
+                                      fontSize: 23,
+                                      height: 1,
+                                      fontWeight: FontWeight.w900)),
+                              Text(x.$3,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontSize: 9, color: Color(0xFF9AA9BA)))
+                            ]),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      });
 }
 
 class BalanceStrip extends StatelessWidget {
@@ -471,9 +530,15 @@ class MonthGrid extends StatelessWidget {
   final AppUser? user;
   final ValueChanged<DateTime>? onEdit;
   const MonthGrid({super.key, required this.data, this.user, this.onEdit});
-  String initial(String uid) {
+  String shortName(String uid) {
     final u = data.users.where((x) => x.id == uid);
-    return u.isEmpty ? '?' : u.first.name.substring(0, 1).toUpperCase();
+    if (u.isEmpty) return '???';
+    return switch (u.first.id) {
+      'u1' => 'DAV',
+      'u4' => 'JUA',
+      'u5' => 'ADR',
+      _ => u.first.name.substring(0, 3).toUpperCase(),
+    };
   }
 
   @override
@@ -483,15 +548,20 @@ class MonthGrid extends StatelessWidget {
         days = DateTime(data.month.year, data.month.month + 1, 0).day;
     final order =
         user == null ? data.users.map((u) => u.id).toList() : [user!.id];
-    return GridView.builder(
-        padding: const EdgeInsets.fromLTRB(6, 2, 6, 8),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 7,
-            childAspectRatio: user == null ? .57 : .82,
-            crossAxisSpacing: 3,
-            mainAxisSpacing: 3),
-        itemCount: offset + days,
-        itemBuilder: (context, i) {
+    return LayoutBuilder(builder: (context, constraints) {
+      final cellWidth = (constraints.maxWidth - 6 * 3) / 7;
+      final aspect = user == null
+          ? (cellWidth < 48 ? .62 : cellWidth < 62 ? .72 : 1.0)
+          : (cellWidth < 48 ? .78 : cellWidth < 62 ? .92 : 1.15);
+      return GridView.builder(
+          padding: const EdgeInsets.fromLTRB(6, 2, 6, 8),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              childAspectRatio: aspect,
+              crossAxisSpacing: 3,
+              mainAxisSpacing: 3),
+          itemCount: offset + days,
+          itemBuilder: (context, i) {
           if (i < offset) return const SizedBox.shrink();
           final day = i - offset + 1,
               date = DateTime(data.month.year, data.month.month, day),
@@ -499,7 +569,12 @@ class MonthGrid extends StatelessWidget {
                   '${date.year}-${date.month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}',
               holiday = data.holidays[key],
               today = DateUtils.isSameDay(date, DateTime.now());
-          return InkWell(
+          return Semantics(
+              button: onEdit != null,
+              label: onEdit == null
+                  ? 'Día $day${holiday == null ? '' : ', festivo: $holiday'}'
+                  : 'Día $day. Editar servicios',
+              child: InkWell(
               onTap: onEdit == null ? null : () => onEdit!(date),
               borderRadius: BorderRadius.circular(8),
               child: Container(
@@ -551,7 +626,7 @@ class MonthGrid extends StatelessWidget {
                                       TextSpan(children: [
                                         if (user == null)
                                           TextSpan(
-                                              text: '${initial(uid)} ',
+                                              text: '${shortName(uid)} ',
                                               style: const TextStyle(
                                                   fontSize: 9,
                                                   fontWeight: FontWeight.w500)),
@@ -566,7 +641,8 @@ class MonthGrid extends StatelessWidget {
                                       style: TextStyle(
                                           color: data.serviceTextColor(data
                                               .assignments['$uid|$key'])))))),
-                  ])));
+                  ]))));
         });
+    });
   }
 }
