@@ -147,8 +147,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         decoration:
                             const InputDecoration(labelText: 'Tu usuario'),
                         items: const [
-                          DropdownMenuItem(value: 'u5', child: Text('Adrián')),
-                          DropdownMenuItem(value: 'u4', child: Text('Juan'))
+                          DropdownMenuItem(value: 'u4', child: Text('JUAN')),
+                          DropdownMenuItem(value: 'u5', child: Text('ADRIÁN'))
                         ],
                         onChanged: busy
                             ? null

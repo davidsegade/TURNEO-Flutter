@@ -21,8 +21,8 @@ void main() {
   test('roster uses active IDs and preserves the Excel alias', () {
     final roster = activeRoster(users);
 
-    expect(roster.map((user) => user.name), ['DAVID', 'Adrián', 'Juan']);
-    expect(roster.map((user) => user.id), ['u1', 'u5', 'u4']);
+    expect(roster.map((user) => user.name), ['DAVID', 'JUAN', 'ADRIÁN']);
+    expect(roster.map((user) => user.id), ['u1', 'u4', 'u5']);
     expect(roster.singleWhere((user) => user.id == 'u1').role, 'admin');
     expect(roster.singleWhere((user) => user.id == 'u5').syncIdentity,
         'Santa Eufemia');
@@ -31,8 +31,9 @@ void main() {
     expect(roster.map((user) => user.id), isNot(contains('u3')));
   });
 
-  test('registration only offers u5 and u4', () {
-    expect(TurneoWritePolicy.registrationLocalUserIds, ['u5', 'u4']);
+  test('registration only offers u4 and u5 in roster order', () {
+    expect(TurneoWritePolicy.registrationLocalUserIds, ['u4', 'u5']);
+    expect(TurneoWritePolicy.activeLocalUserOrder, ['u1', 'u4', 'u5']);
     expect(TurneoWritePolicy.canRegister('u5'), isTrue);
     expect(TurneoWritePolicy.canRegister('u4'), isTrue);
     expect(TurneoWritePolicy.canRegister('u1'), isFalse);

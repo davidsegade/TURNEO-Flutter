@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:turneo/src/auth/login_screen.dart';
 import 'package:turneo/src/models/turneo_models.dart';
 
 void main() {
@@ -10,5 +12,20 @@ void main() {
         users: const [],
         holidays: {});
     expect(d.title, 'SEPTIEMBRE 2026');
+  });
+
+  testWidgets('registration selector exposes only the ordered active users',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+        home: LoginScreen(onSignedIn: () {})));
+    await tester.tap(find.text('REGISTRO INICIAL'));
+    await tester.pump();
+
+    final selector = tester.widget<DropdownButtonFormField<String>>(
+        find.byType(DropdownButtonFormField<String>));
+    expect(selector.items!.map((item) => item.value), ['u4', 'u5']);
+    expect(find.text('JUAN'), findsOneWidget);
+    expect(find.text('ADRIÁN'), findsOneWidget);
+    expect(find.text('DAVID'), findsNothing);
   });
 }

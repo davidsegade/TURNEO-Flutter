@@ -121,7 +121,9 @@ void main() {
           containsAll(['gte.2026-12-01', 'lt.2027-01-01']));
       expect(request.url.queryParameters['app_id'], 'eq.default');
     }
-    await repo.loadMonth(DateTime(2027, 1));
+    final nextYear = await repo.loadMonth(DateTime(2027, 1));
+    expect(nextYear.users.map((user) => user.id), ['u1', 'u4', 'u5']);
+    expect(nextYear.users.map((user) => user.name), ['DAVID', 'JUAN', 'ADRIÁN']);
     expect(
         requests.where((r) => r.url.pathSegments.last == 'services').length, 1);
     expect(requests.where((r) => r.url.pathSegments.last == 'app_users').length,

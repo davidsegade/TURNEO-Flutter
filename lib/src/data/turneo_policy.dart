@@ -7,7 +7,8 @@ class TurneoWritePolicy {
   static const googleSheetsSpreadsheetId =
       '1qL4Wrv9aR-LXlmRME4wMo2-GaVAp3y1jYeqEHT-6_0w';
   static const activeLocalUserIds = {'u1', 'u4', 'u5'};
-  static const registrationLocalUserIds = ['u5', 'u4'];
+  static const activeLocalUserOrder = ['u1', 'u4', 'u5'];
+  static const registrationLocalUserIds = ['u4', 'u5'];
 
   static bool canWrite(DateTime date) => date.year == targetYear;
 
@@ -19,23 +20,23 @@ class TurneoWritePolicy {
 /// Retired IDs remain valid keys for historical planning rows, but are not
 /// returned as active users. Names never decide whether an ID is retained.
 List<AppUser> activeRoster(Iterable<AppUser> users) {
-  final result = <AppUser>[];
-  final seen = <String>{};
+  final byId = <String, AppUser>{};
   for (final user in users) {
-    if (!TurneoWritePolicy.activeLocalUserIds.contains(user.id) ||
-        !seen.add(user.id)) {
-      continue;
+    if (TurneoWritePolicy.activeLocalUserIds.contains(user.id)) {
+      byId.putIfAbsent(user.id, () => user);
     }
-    result.add(user.id == 'u5'
-        ? AppUser(
-            id: user.id,
-            name: 'Adrián',
-            role: user.role,
-            slot: user.slot,
-            color: user.color,
-            sheetName: user.sheetName,
-          )
-        : user);
   }
-  return result;
+  const names = {'u1': 'DAVID', 'u4': 'JUAN', 'u5': 'ADRIÁN'};
+  return [
+    for (final id in TurneoWritePolicy.activeLocalUserOrder)
+      if (byId[id] case final user)
+        AppUser(
+          id: user.id,
+          name: names[id]!,
+          role: user.role,
+          slot: user.slot,
+          color: user.color,
+          sheetName: user.sheetName,
+        )
+  ];
 }
