@@ -427,24 +427,27 @@ class SummaryCards extends StatelessWidget {
             spacing: gap,
             runSpacing: gap,
             children: [
-              for (final x in values)
+              for (var i = 0; i < values.length; i++)
                 SizedBox(
+                  key: ValueKey('summary-card-$i'),
                   width: width,
                   height: 92,
                   child: Semantics(
                     button: true,
-                    label: '${x.$1}: ${x.$2}. ${x.$3}',
+                    label:
+                        '${values[i].$1}: ${values[i].$2}. ${values[i].$3}',
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
                       onTap: () => showDialog<void>(
                           context: context,
                           builder: (context) => AlertDialog(
-                                  title: Text(x.$1),
+                                  title: Text(values[i].$1),
                                   content: SingleChildScrollView(
-                                      child: Text('${x.$2}\n\n${x.$3}')),
+                                      child: Text(
+                                          '${values[i].$2}\n\n${values[i].$3}')),
                                   actions: [
-                                    TextButton(
-                                        onPressed: () => Navigator.pop(context),
+                                      TextButton(
+                                          onPressed: () => Navigator.pop(context),
                                         child: const Text('CERRAR'))
                                   ])),
                       child: Container(
@@ -457,7 +460,7 @@ class SummaryCards extends StatelessWidget {
                         child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(x.$1,
+                              Text(values[i].$1,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
@@ -465,12 +468,12 @@ class SummaryCards extends StatelessWidget {
                                       color: Color(0xFF9AA9BA),
                                       fontWeight: FontWeight.w700)),
                               const Spacer(),
-                              Text(x.$2,
+                              Text(values[i].$2,
                                   style: const TextStyle(
                                       fontSize: 23,
                                       height: 1,
                                       fontWeight: FontWeight.w900)),
-                              Text(x.$3,
+                              Text(values[i].$3,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(

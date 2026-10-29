@@ -50,6 +50,54 @@ class CalendarRepository implements TurneoRepository {
 }
 
 void main() {
+  test(
+      'active roster filters five profiles and preserves the three-user order',
+      () {
+    final roster = activeRoster([
+      users[2],
+      const AppUser(
+          id: 'u2', name: 'CARLOS', role: 'user', slot: 1, color: '#FFFFFF'),
+      users[0],
+      const AppUser(
+          id: 'u3',
+          name: 'ALEJANDRO',
+          role: 'user',
+          slot: 3,
+          color: '#FFFFFF'),
+      users[1],
+    ]);
+
+    expect(roster.map((user) => user.id), ['u1', 'u4', 'u5']);
+    expect(roster.map((user) => user.name), ['DAVID', 'JUAN', 'ADRIÁN']);
+  });
+
+  for (final width in [320.0, 390.0]) {
+    testWidgets('summary cards share width at $width pixels', (tester) async {
+      tester.view.physicalSize = Size(width, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final data = MonthData(
+          month: DateTime(2027, 1),
+          assignments: const {},
+          colors: const {},
+          users: users,
+          holidays: const {});
+      await tester.pumpWidget(MaterialApp(
+          home: Scaffold(body: SummaryCards(data: data))));
+      await tester.pumpAndSettle();
+
+      final widths = [
+        for (var i = 0; i < 3; i++)
+          tester.getSize(find.byKey(ValueKey('summary-card-$i'))).width
+      ];
+      expect(widths[0], widths[1]);
+      expect(widths[1], widths[2]);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   test('cell patch preserves other users and dates and can clear a cell', () {
     final original = MonthData(
         month: DateTime(2026, 9),

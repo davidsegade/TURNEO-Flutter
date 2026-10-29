@@ -15,7 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final password = TextEditingController();
   final invite = TextEditingController();
   bool registering = false;
-  String localUserId = TurneoWritePolicy.registrationLocalUserIds.first;
+  String localUserId = TurneoWritePolicy.registrationLocalUserIds.last;
   bool busy = false;
   String? error;
   String? info;

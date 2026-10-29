@@ -33,6 +33,11 @@ jobs:
         run: flutter analyze
       - name: Test
         run: flutter test
+      - name: Test shift-register validation
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno test supabase/functions/shift-register/validation_test.ts
 
       - name: Interaction regression gate
         run: flutter test test/calendar_test.dart --reporter expanded
