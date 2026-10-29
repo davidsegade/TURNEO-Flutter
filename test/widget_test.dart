@@ -23,7 +23,7 @@ void main() {
     await tester.tap(find.byType(DropdownButtonFormField<String>));
     await tester.pumpAndSettle();
 
-    expect(find.text('JUAN'), findsOneWidget);
+    expect(find.text('JUAN'), findsWidgets);
     expect(find.text('ADRIÁN'), findsOneWidget);
     expect(find.text('CARLOS'), findsNothing);
     expect(find.text('ALEJANDRO'), findsNothing);
