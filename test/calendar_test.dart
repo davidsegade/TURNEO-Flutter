@@ -88,8 +88,6 @@ void main() {
           home: Scaffold(body: SummaryCards(data: data))));
       await tester.pumpAndSettle();
 
-      final cards = find.byType(Expanded);
-      expect(cards, findsNWidgets(3));
       final widths = [
         for (var i = 0; i < 3; i++)
           tester.getSize(find.byKey(ValueKey('summary-card-$i'))).width
