@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:turneo/src/data/balance_calculator.dart';
 import 'package:turneo/src/data/turneo_policy.dart';
 import 'package:turneo/src/models/turneo_models.dart';
 
@@ -47,5 +48,63 @@ void main() {
     expect(TurneoWritePolicy.canWrite(DateTime(2028, 1, 1)), isFalse);
     expect(TurneoWritePolicy.googleSheetsSpreadsheetId,
         '1qL4Wrv9aR-LXlmRME4wMo2-GaVAp3y1jYeqEHT-6_0w');
+  });
+
+  test('u5 starts with zero DAS and the shared calculator preserves it', () {
+    expect(TurneoWritePolicy.dasInitialFor('u5'), 0);
+    final balance = computeBalance(const BalanceInputs(
+      localUserId: 'u5',
+      dasInitial: 0,
+      dasGenerated: 2,
+      dasTaken: 1,
+      holidayEntitlements: [],
+    ));
+    expect(balance.dasAvailable, 1);
+    expect(balance.dfAvailable, 0);
+  });
+
+  test('u5 rejects a non-zero DAS baseline', () {
+    expect(
+        () => computeBalance(const BalanceInputs(
+              localUserId: 'u5',
+              dasInitial: 1,
+              dasGenerated: 0,
+              dasTaken: 0,
+              holidayEntitlements: [],
+            )), throwsArgumentError);
+  });
+
+  test('DF stays unknown until holiday coverage is resolved', () {
+    final balance = computeBalance(BalanceInputs(
+      localUserId: 'u5',
+      dasInitial: TurneoWritePolicy.dasInitialFor('u5')!,
+      dasGenerated: 0,
+      dasTaken: 0,
+      holidayEntitlements: [
+        HolidayEntitlement(
+            date: DateTime(2027, 1, 1), scope: 'national', enjoyed: null),
+      ],
+    ));
+    expect(balance.dasAvailable, 0);
+    expect(balance.dfAvailable, isNull);
+  });
+
+  test('DF counts resolved un-enjoyed entitlements', () {
+    final balance = computeBalance(BalanceInputs(
+      localUserId: 'u1',
+      dasInitial: 3,
+      dasGenerated: 0,
+      dasTaken: 0,
+      holidayEntitlements: [
+        HolidayEntitlement(
+            date: DateTime(2027, 1, 1), scope: 'national', enjoyed: false),
+        HolidayEntitlement(
+            date: DateTime(2027, 1, 6), scope: 'autonomic', enjoyed: true),
+        HolidayEntitlement(
+            date: DateTime(2027, 9, 8), scope: 'local', enjoyed: false),
+      ],
+    ));
+    expect(balance.dasAvailable, 3);
+    expect(balance.dfAvailable, 2);
   });
 }

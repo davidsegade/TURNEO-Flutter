@@ -59,6 +59,28 @@ El preflight recibe `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY` por entorno.
 en el cliente. Las consultas anónimas no prueban el acceso autenticado:
 las pruebas RLS y de sesión deben verificarse por separado.
 
+Los balances se muestran desde `balance_snapshots`; Flutter no escribe ni
+recalcula el histórico remoto. El cálculo puro común está en
+`lib/src/data/balance_calculator.dart`: recibe los valores ya resueltos por
+las reglas existentes, fija la baseline de DAS de `u5` en `0` y deja DF en
+`null` si falta la resolución de cobertura de cualquier festivo.
+
+El operador debe escribir una fila de `balance_baselines` por usuario y periodo
+de cálculo, con `local_user_id`, el periodo completo (`period_id`, no solo el
+mes) y `das_initial`; para `u5`, `das_initial = 0`. Debe escribir una fila de
+`balance_snapshots` por usuario y periodo mostrado, con el mismo `period_id`,
+`das_generated`, `das_available`, `df_available` y los campos PICO existentes.
+Los periodos de ambas tablas deben ser idénticos y no deben mezclarse cierres
+mensuales con periodos anuales.
+
+`df_available` solo puede publicarse cuando el operador/backend haya resuelto
+los festivos nacionales, autonómicos y locales del periodo y su disfrute según
+el algoritmo existente, incluyendo turnos/coberturas cuando esa regla los
+necesite. Si faltan esos datos, el resultado correcto en esta app es
+desconocido, no cero ni una cifra estimada. Sheets y SQL se actualizan por sus
+conectores separados; OpenCode no los modifica.
+
 Las pruebas automatizadas cubren pantallas de 320 y 390 píxeles, edición sin
 recarga, errores de guardado, permisos del cliente, consultas acotadas por mes,
-cambio de año y contraste de MC/TC. Los balances DAS/DF/PICO no se recalculan.
+cambio de año, contraste de MC/TC, baseline DAS de `u5` y la incertidumbre de
+DF sin cobertura.

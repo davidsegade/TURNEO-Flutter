@@ -9,11 +9,17 @@ class TurneoWritePolicy {
   static const activeLocalUserIds = {'u1', 'u4', 'u5'};
   static const activeLocalUserOrder = ['u1', 'u4', 'u5'];
   static const registrationLocalUserIds = ['u4', 'u5'];
+  static const dasInitialByLocalUser = {'u5': 0};
 
   static bool canWrite(DateTime date) => date.year == targetYear;
 
   static bool canRegister(String localUserId) =>
       registrationLocalUserIds.contains(localUserId);
+
+  /// u5 has an explicit zero baseline. Other users use the value supplied by
+  /// the existing operator/backend process; this app does not guess it.
+  static int? dasInitialFor(String localUserId) =>
+      dasInitialByLocalUser[localUserId];
 }
 
 /// Applies the current roster without rewriting historical planning rows.
