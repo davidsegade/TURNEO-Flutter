@@ -85,7 +85,7 @@ void main() {
     expect(changed.assignments['u1|2026-09-01'], 'MC');
   });
 
-  for (final width in [320.0, 390.0]) {
+  for (final width in [320.0, 390.0, 430.0]) {
     testWidgets(
         'mobile calendar $width keeps 7 columns and saves without reload',
         (tester) async {
@@ -106,6 +106,9 @@ void main() {
       expect(find.text('DAVID'), findsOneWidget);
       expect(find.text('JUAN'), findsOneWidget);
       expect(find.text('ADRIÁN'), findsOneWidget);
+      expect(find.text('DAV · DAVID'), findsOneWidget);
+      expect(find.text('JUA · JUAN'), findsOneWidget);
+      expect(find.text('ADR · ADRIÁN'), findsOneWidget);
       expect(find.text('CARLOS'), findsNothing);
       expect(find.text('ALEJANDRO'), findsNothing);
       final nav = tester.widget<NavigationBar>(find.byType(NavigationBar));
@@ -138,6 +141,22 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('general layout has no overflow at the supported mobile widths',
+      (tester) async {
+    for (final width in [320.0, 390.0, 430.0]) {
+      tester.view.physicalSize = Size(width, 844);
+      tester.view.devicePixelRatio = 1;
+      final repo = CalendarRepository();
+      await tester.pumpWidget(MaterialApp(
+          home: CalendarScreen(repository: repo, onLogout: () async {})));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull,
+          reason: 'overflow or layout exception at width $width');
+    }
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+  });
 
   testWidgets('editing David keeps David selected after save', (tester) async {
     final repo = CalendarRepository()..profile = users[1];
