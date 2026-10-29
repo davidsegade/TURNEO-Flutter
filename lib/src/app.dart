@@ -416,70 +416,70 @@ class SummaryCards extends StatelessWidget {
 
   Widget _cards(List<(String, String, String)> values) => LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 620 ? 3 : 2;
         final gap = constraints.maxWidth >= 620 ? 8.0 : 6.0;
-        final contentWidth = constraints.maxWidth - 16;
-        final width =
-            (contentWidth - gap * (columns - 1)) / columns;
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Wrap(
-            spacing: gap,
-            runSpacing: gap,
+          child: Row(
             children: [
-              for (final x in values)
-                SizedBox(
-                  width: width,
-                  height: 92,
-                  child: Semantics(
-                    button: true,
-                    label: '${x.$1}: ${x.$2}. ${x.$3}',
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () => showDialog<void>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                                  title: Text(x.$1),
-                                  content: SingleChildScrollView(
-                                      child: Text('${x.$2}\n\n${x.$3}')),
-                                  actions: [
-                                    TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: const Text('CERRAR'))
-                                  ])),
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                            color: const Color(0xFF101823),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                                color: const Color(0xFF1D2A3A))),
-                        child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(x.$1,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Color(0xFF9AA9BA),
-                                      fontWeight: FontWeight.w700)),
-                              const Spacer(),
-                              Text(x.$2,
-                                  style: const TextStyle(
-                                      fontSize: 23,
-                                      height: 1,
-                                      fontWeight: FontWeight.w900)),
-                              Text(x.$3,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                      fontSize: 9, color: Color(0xFF9AA9BA)))
-                            ]),
+              for (var i = 0; i < values.length; i++) ...[
+                if (i > 0) SizedBox(width: gap),
+                Expanded(
+                  child: SizedBox(
+                    key: ValueKey('summary-card-$i'),
+                    height: 92,
+                    child: Semantics(
+                      container: true,
+                      button: true,
+                      label:
+                          '${values[i].$1}: ${values[i].$2}. ${values[i].$3}',
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () => showDialog<void>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                                    title: Text(values[i].$1),
+                                    content: SingleChildScrollView(
+                                        child: Text(
+                                            '${values[i].$2}\n\n${values[i].$3}')),
+                                    actions: [
+                                      TextButton(
+                                          onPressed: () => Navigator.pop(context),
+                                          child: const Text('CERRAR'))
+                                    ])),
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                              color: const Color(0xFF101823),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: const Color(0xFF1D2A3A))),
+                          child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(values[i].$1,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Color(0xFF9AA9BA),
+                                        fontWeight: FontWeight.w700)),
+                                const Spacer(),
+                                Text(values[i].$2,
+                                    style: const TextStyle(
+                                        fontSize: 23,
+                                        height: 1,
+                                        fontWeight: FontWeight.w900)),
+                                Text(values[i].$3,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontSize: 9, color: Color(0xFF9AA9BA)))
+                              ]),
+                        ),
                       ),
                     ),
                   ),
-                ),
+                )
             ],
           ),
         );
