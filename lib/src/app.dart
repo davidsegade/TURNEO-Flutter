@@ -221,8 +221,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           icon: const Icon(Icons.chevron_left)),
                       Expanded(
                           child: Center(
-                              child: Text(d.title,
-                                  style: const TextStyle(
+                               child: Text(d.title,
+                                   maxLines: 1,
+                                   overflow: TextOverflow.ellipsis,
+                                   style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w900)))),
                       IconButton(
@@ -306,23 +308,24 @@ class _RosterLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.fromLTRB(10, 7, 10, 0),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 2,
-            children: [
-              for (final user in users)
-                Text(
+        child: Row(
+          children: [
+            for (final user in users)
+              Expanded(
+                child: Text(
                   '${_shortName(user.id)} · ${user.name}',
-                  semanticsLabel: '${user.name}, abreviatura ${_shortName(user.id)}',
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  semanticsLabel:
+                      '${user.name}, abreviatura ${_shortName(user.id)}',
                   style: const TextStyle(
                       color: Color(0xFF9AA9BA),
                       fontSize: 10,
                       fontWeight: FontWeight.w700),
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
       );
 
@@ -416,7 +419,13 @@ class SummaryCards extends StatelessWidget {
 
   Widget _cards(List<(String, String, String)> values) => LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 620 ? 3 : 2;
+        // Keep the three metrics on one row so the last card never leaves a
+        // misleading empty half-row on narrow screens.
+        final columns = values.length == 3
+            ? 3
+            : constraints.maxWidth >= 620
+                ? 3
+                : 2;
         final gap = constraints.maxWidth >= 620 ? 8.0 : 6.0;
         final contentWidth = constraints.maxWidth - 16;
         final width =
@@ -468,8 +477,10 @@ class SummaryCards extends StatelessWidget {
                                       color: Color(0xFF9AA9BA),
                                       fontWeight: FontWeight.w700)),
                               const Spacer(),
-                              Text(values[i].$2,
-                                  style: const TextStyle(
+                               Text(values[i].$2,
+                                   maxLines: 1,
+                                   overflow: TextOverflow.ellipsis,
+                                   style: const TextStyle(
                                       fontSize: 23,
                                       height: 1,
                                       fontWeight: FontWeight.w900)),
@@ -521,8 +532,10 @@ class BalanceStrip extends StatelessWidget {
                   fontSize: 10,
                   color: Color(0xFF9AA9BA),
                   fontWeight: FontWeight.w800)),
-          Text(value,
-              style:
+           Text(value,
+               maxLines: 1,
+               overflow: TextOverflow.ellipsis,
+               style:
                   const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
         ]),
       );
