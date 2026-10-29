@@ -20,7 +20,13 @@ Use this skill for the repository's explicit data boundary:
 - Flutter writes `planning` through Supabase; it does not call Google Sheets.
 - The Apps Script pull reads the Supabase audit stream and writes only mapped 2027 cells.
 - 2026 is read-only historical data. Never rewrite, migrate, or delete it while changing this flow.
-- The active local IDs are `u1`, `u4`, and `u5`; `u5` is the `Santa Eufemia` Sheets identity.
+- The 2026 and 2027 books use the same ID-based `SYNC_MAP` positions: row 9 is
+  `u1` / `DAVID`, row 10 is `u4` / `JUAN`, row 11 is `u5` / `SANTA EUFEMIA`
+  (Adrián), and row 12 is hidden.
+- The active visible local IDs are `u1`, `u4`, and `u5`. `u2` (Carlos) and
+  `u3` (Alejandro) are inactive in Supabase and must not be shown in the app.
+  Planning and audit records for them may remain archived or inactive; do not
+  claim complete database deletion.
 - Never put `SYNC_SECRET`, Supabase keys, tokens, or workbook credentials in source, logs, tests, or commits.
 - Do not install triggers, deploy Edge Functions, call production endpoints, or mutate a spreadsheet from this skill.
 
@@ -43,6 +49,10 @@ Use this skill for the repository's explicit data boundary:
 - [ ] No 2026 row is written or rewritten.
 - [ ] Only `u1`, `u4`, and `u5` are in the active 2027 map.
 - [ ] `u5` remains mapped to `Santa Eufemia`.
+- [ ] Both book maps use the ID positions: rows 9, 10, 11 for `u1`, `u4`, `u5`; row 12 remains hidden.
+- [ ] `u5` uses DAS baseline `0`; existing national, autonomous, and local holiday formulas yield DF 5 for December 2026 and DF 6 for January 2027.
+- [ ] December 2027 DF is documented as a forecast of `18` only if `u5` takes no DF.
+- [ ] `u2/u3` are documented as inactive and not visible, without claiming complete DB deletion.
 - [ ] Cursor advances only from the validated response high-water mark.
 - [ ] Formula cells and old-value conflicts block the cursor.
 - [ ] No secret or production side effect was introduced.
