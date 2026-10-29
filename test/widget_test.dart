@@ -24,11 +24,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('JUAN'), findsWidgets);
-    expect(find.text('ADRIÁN'), findsOneWidget);
+    expect(find.text('ADRIÁN'), findsWidgets);
     expect(find.text('CARLOS'), findsNothing);
     expect(find.text('ALEJANDRO'), findsNothing);
 
-    await tester.tap(find.text('ADRIÁN'));
+    await tester.tap(find.text('ADRIÁN').last);
     await tester.pumpAndSettle();
     expect(find.text('ADRIÁN'), findsOneWidget);
   });

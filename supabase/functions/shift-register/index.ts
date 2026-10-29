@@ -1,17 +1,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { isAllowedRegistrationUser } from './validation.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
-
-export const registrationLocalUserIds = ['u4', 'u5'] as const;
-
-export function isAllowedRegistrationUser(localUserId: unknown): localUserId is 'u4' | 'u5' {
-  return typeof localUserId === 'string' &&
-      registrationLocalUserIds.includes(localUserId as 'u4' | 'u5');
-}
 
 function json(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -78,6 +72,7 @@ Deno.serve(async (request) => {
       .eq('app_id', 'default')
       .eq('local_user_id', localUserId)
       .eq('active', true)
+      .is('auth_uid', null)
       .select('id')
       .maybeSingle();
 
