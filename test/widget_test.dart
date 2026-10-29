@@ -21,9 +21,10 @@ void main() {
     await tester.tap(find.text('REGISTRO INICIAL'));
     await tester.pump();
 
-    final selector = tester.widget<DropdownButtonFormField<String>>(
-        find.byType(DropdownButtonFormField<String>));
-    expect(selector.items!.map((item) => item.value), ['u4', 'u5']);
+    final options = tester
+        .widgetList<DropdownMenuItem<String>>(find.byType(DropdownMenuItem))
+        .toList();
+    expect(options.map((item) => item.value), ['u4', 'u5']);
     expect(find.text('JUAN'), findsOneWidget);
     expect(find.text('ADRIÁN'), findsOneWidget);
     expect(find.text('DAVID'), findsNothing);

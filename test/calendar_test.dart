@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:turneo/src/app.dart';
+import 'package:turneo/src/data/turneo_policy.dart';
 import 'package:turneo/src/data/turneo_repository.dart';
 import 'package:turneo/src/models/turneo_models.dart';
 

@@ -35,7 +35,7 @@ List<AppUser> activeRoster(Iterable<AppUser> users) {
   const names = {'u1': 'DAVID', 'u4': 'JUAN', 'u5': 'ADRIÁN'};
   return [
     for (final id in TurneoWritePolicy.activeLocalUserOrder)
-      if (byId[id] case final user)
+      if (byId[id] case final AppUser user)
         AppUser(
           id: user.id,
           name: names[id]!,
