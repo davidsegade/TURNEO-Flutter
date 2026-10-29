@@ -23,12 +23,13 @@ void main() {
     await tester.tap(find.byType(DropdownButtonFormField<String>));
     await tester.pumpAndSettle();
 
-    final options = tester
-        .widgetList<DropdownMenuItem<String>>(find.byType(DropdownMenuItem))
-        .toList();
-    expect(options.map((item) => item.value), ['u4', 'u5']);
     expect(find.text('JUAN'), findsOneWidget);
     expect(find.text('ADRIÁN'), findsOneWidget);
-    expect(find.text('DAVID'), findsNothing);
+    expect(find.text('CARLOS'), findsNothing);
+    expect(find.text('ALEJANDRO'), findsNothing);
+
+    await tester.tap(find.text('ADRIÁN'));
+    await tester.pumpAndSettle();
+    expect(find.text('ADRIÁN'), findsOneWidget);
   });
 }

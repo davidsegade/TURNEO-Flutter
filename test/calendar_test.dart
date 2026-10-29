@@ -590,7 +590,7 @@ void main() {
 
     // Arrastrar hacia abajo para descartar
     await tester.drag(
-        find.textContaining('ADRIÁN'), const Offset(0, 400));
+        find.textContaining(' · ADRIÁN'), const Offset(0, 400));
     await tester.pumpAndSettle();
 
     expect(find.text('BORRAR SERVICIO'), findsNothing);
