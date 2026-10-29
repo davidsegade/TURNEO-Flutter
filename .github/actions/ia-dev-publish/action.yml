@@ -1,0 +1,74 @@
+name: 'IA DEV Publish'
+description: 'Publish IA DEV execution as PR with statuses'
+inputs:
+  target-repo:
+    description: 'Target repository'
+    required: true
+  target-token:
+    description: 'Token for target repo (needs write permissions)'
+    required: true
+  base-sha:
+    description: 'Base SHA'
+    required: true
+  expected-digest:
+    description: 'Expected patch digest from verify'
+    required: true
+  allowed-paths:
+    description: 'JSON array of allowed paths'
+    required: true
+  task:
+    description: 'Task name'
+    required: true
+outputs:
+  pr-url:
+    description: 'URL of the pull request opened for the verified change'
+    value: ${{ steps.publish.outputs.pr-url }}
+  pr-sha:
+    description: 'Commit SHA published on the pull request branch'
+    value: ${{ steps.publish.outputs.pr-sha }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout target repo at base SHA
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout@v4.4.0
+      with:
+        repository: ${{ inputs.target-repo }}
+        ref: ${{ inputs.base-sha }}
+        persist-credentials: true
+        path: target
+    - name: Checkout controller repo
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout@v4.4.0
+      with:
+        repository: davidsegade/ia-dev-architecture-lab
+        ref: main
+        path: ia-dev
+        persist-credentials: false
+    - name: Setup Node
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # actions/setup-node@v4.4.0
+      with:
+        node-version: '24'
+    - name: Download artifacts
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # actions/download-artifact@v4
+      with:
+        pattern: '*'
+        merge-multiple: true
+        path: target/bundle
+    - name: Publish
+      id: publish
+      run: node "$IA_DEV_ENGINE"/controller/github.mjs publish
+      shell: bash
+      working-directory: target
+      env:
+        IA_DEV_ENGINE: ${{ github.workspace }}/ia-dev
+        GH_TOKEN: ${{ inputs.target-token }}
+        GITHUB_REPOSITORY: ${{ inputs.target-repo }}
+        EXPECTED_DIGEST: ${{ inputs.expected-digest }}
+        BASE_SHA: ${{ inputs.base-sha }}
+        ALLOWED_PATHS: ${{ inputs.allowed-paths }}
+        TASK: ${{ inputs.task }}
+    - name: Upload publication artifact
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # actions/upload-artifact@v4
+      with:
+        name: publication
+        path: target/bundle/publication.json
+        retention-days: 7

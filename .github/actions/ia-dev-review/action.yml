@@ -1,0 +1,109 @@
+name: 'IA DEV Review'
+description: 'Independent review of IA DEV execution'
+outputs:
+  approved:
+    description: 'Whether the independent reviewer approved the change'
+    value: ${{ steps.verdict.outputs.approved }}
+inputs:
+  task:
+    description: 'Task name'
+    required: true
+  target-repo:
+    description: 'Target repository'
+    required: true
+  target-token:
+    description: 'Token for target repo'
+    required: true
+  base-sha:
+    description: 'Base SHA'
+    required: true
+  protected-paths:
+    description: 'Comma-separated list of protected paths'
+    required: false
+    default: ''
+  allowed-paths:
+    description: 'JSON array of allowed paths'
+    required: true
+  acceptance-command:
+    description: 'Command to run acceptance tests'
+    required: true
+  build-command:
+    description: 'Command to run build'
+    required: true
+  workspace-root:
+    description: 'Workspace root'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout target repo at base SHA
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout@v4.4.0
+      with:
+        repository: ${{ inputs.target-repo }}
+        ref: ${{ inputs.base-sha }}
+        persist-credentials: false
+        path: target
+    - name: Checkout controller repo
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout@v4.4.0
+      with:
+        repository: davidsegade/ia-dev-architecture-lab
+        ref: main
+        path: ia-dev
+        persist-credentials: false
+    - name: Setup Node
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # actions/setup-node@v4.4.0
+      with:
+        node-version: '24'
+    - name: Setup Flutter
+      uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # subosito/flutter-action@v2
+      with:
+        channel: stable
+    - name: Download execution artifact
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # actions/download-artifact@v4
+      with:
+        name: execution
+        path: target/bundle
+    - name: Gate check
+      run: node "$IA_DEV_ENGINE"/controller/gate.mjs "$TASK" bundle/change.patch
+      shell: bash
+      working-directory: target
+      env:
+        IA_DEV_ENGINE: ${{ github.workspace }}/ia-dev
+        TASK: ${{ inputs.task }}
+        ALLOWED_PATHS: ${{ inputs.allowed-paths }}
+        PROTECTED_PATHS: ${{ inputs.protected-paths }}
+        ACCEPTANCE_COMMAND: ${{ inputs.acceptance-command }}
+        BUILD_COMMAND: ${{ inputs.build-command }}
+        WORKSPACE_ROOT: ${{ inputs.workspace-root }}
+        GITHUB_REPOSITORY: ${{ inputs.target-repo }}
+    - name: Install OpenCode
+      run: npm install --prefix "$RUNNER_TEMP/opencode" --no-audit --no-fund opencode-ai@1.18.34
+      shell: bash
+      working-directory: target
+    - name: Review agent
+      run: node "$IA_DEV_ENGINE"/controller/agent.mjs review "$TASK"
+      shell: bash
+      working-directory: target
+      env:
+        IA_DEV_ENGINE: ${{ github.workspace }}/ia-dev
+        TASK: ${{ inputs.task }}
+        OPENCODE_BIN: ${{ runner.temp }}/opencode/node_modules/.bin/opencode
+        ALLOWED_PATHS: ${{ inputs.allowed-paths }}
+        PROTECTED_PATHS: ${{ inputs.protected-paths }}
+        ACCEPTANCE_COMMAND: ${{ inputs.acceptance-command }}
+        BUILD_COMMAND: ${{ inputs.build-command }}
+        WORKSPACE_ROOT: ${{ inputs.workspace-root }}
+        GITHUB_REPOSITORY: ${{ inputs.target-repo }}
+    - name: Expose reviewer verdict
+      shell: bash
+      id: verdict
+      working-directory: target
+      run: |
+        node -e 'const fs=require("fs");const r=JSON.parse(fs.readFileSync("bundle/review-result.json"));fs.appendFileSync(process.env.GITHUB_OUTPUT,`approved=${r.approved}\n`);'
+    - name: Upload review artifact
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # actions/upload-artifact@v4
+      with:
+        name: review
+        path: target/bundle/review*
+        retention-days: 7

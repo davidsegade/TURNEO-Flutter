@@ -1,0 +1,63 @@
+name: 'IA DEV Prepare'
+description: 'Prepare IA DEV execution: validate repo, load config, extract task, check duplicates'
+inputs:
+  target-repo:
+    description: 'Target repository (owner/name)'
+    required: true
+  target-token:
+    description: 'Token for target repo (GITHUB_TOKEN from caller)'
+    required: true
+  issue-number:
+    description: 'Issue number to process'
+    required: true
+  automatic:
+    description: 'Automatic retry marker'
+    required: false
+    default: 'false'
+outputs:
+  task:
+    description: 'Task name to execute'
+    value: ${{ steps.prepare.outputs.task }}
+  issue:
+    description: 'Issue number'
+    value: ${{ steps.prepare.outputs.issue }}
+  base:
+    description: 'Base SHA'
+    value: ${{ steps.prepare.outputs.base }}
+  skip:
+    description: 'Whether to skip execution'
+    value: ${{ steps.prepare.outputs.skip }}
+  feedback:
+    description: 'Previous feedback for retry'
+    value: ${{ steps.prepare.outputs.feedback }}
+  target-config:
+    description: 'JSON config for target repo'
+    value: ${{ steps.prepare.outputs.target-config }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout controller repo (ia-dev-architecture-lab)
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # actions/checkout@v4.4.0
+      with:
+        repository: davidsegade/ia-dev-architecture-lab
+        ref: main
+        path: ia-dev
+        persist-credentials: false
+    - name: Setup Node
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # actions/setup-node@v4.4.0
+      with:
+        node-version: '24'
+    - name: Run architecture tests
+      run: npm run test:architecture
+      shell: bash
+      working-directory: ia-dev
+    - name: Prepare
+      id: prepare
+      run: |
+        node "$IA_DEV_ENGINE"/controller/github.mjs prepare
+      shell: bash
+      env:
+        IA_DEV_ENGINE: ${{ github.workspace }}/ia-dev
+        GH_TOKEN: ${{ inputs.target-token }}
+        GITHUB_REPOSITORY: ${{ inputs.target-repo }}
+        GITHUB_EVENT_PATH: ${{ runner.temp }}/event.json
