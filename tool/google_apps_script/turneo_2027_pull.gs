@@ -188,6 +188,7 @@ function parsePullResponse_(payload) {
 /**
  * Pure processing stage. readCell returns {range, value, formula}; no Sheet API
  * is needed to test the safety rules. A write is allowed only when current=old.
+ * A continuous chain already at its final value needs no write on retry.
  */
 function planChanges(changes, syncMap, readCell) {
   const writes = [];
@@ -195,6 +196,8 @@ function planChanges(changes, syncMap, readCell) {
   const virtual = {};
   const ignored = [];
   const errors = [];
+  const mappedChanges = [];
+  const chainsByCell = Object.create(null);
   for (const raw of changes) {
     const change = normalizeChange_(raw);
     if (!change) {
@@ -209,12 +212,25 @@ function planChanges(changes, syncMap, readCell) {
       ignored.push(change.id);
       continue;
     }
-    const reference = syncMap[changeKey_({user_local_id: change.userId, work_date: change.date})];
+    const mappingKey = changeKey_({user_local_id: change.userId, work_date: change.date});
+    const reference = syncMap[mappingKey];
     if (!reference) {
       errors.push('missing SYNC_MAP row for ' + change.id);
       continue;
     }
     const cellKey = reference.sheet + '!' + reference.cell;
+    mappedChanges.push({change, reference, cellKey});
+    const chain = chainsByCell[cellKey];
+    if (chain) {
+      chain.continuous = chain.continuous && chain.mappingKey === mappingKey
+          && sameValue_(chain.finalValue, change.oldValue);
+      chain.finalValue = change.newValue;
+    } else {
+      chainsByCell[cellKey] = {mappingKey, continuous: true, finalValue: change.newValue};
+    }
+  }
+
+  for (const {change, reference, cellKey} of mappedChanges) {
     if (!virtual[cellKey]) {
       const current = readCell(reference);
       virtual[cellKey] = {
@@ -222,6 +238,8 @@ function planChanges(changes, syncMap, readCell) {
         value: current.value,
         formula: current.formula,
         initialValue: current.value,
+        alreadyApplied: chainsByCell[cellKey].continuous
+            && sameValue_(current.value, chainsByCell[cellKey].finalValue),
       };
     }
     const state = virtual[cellKey];
@@ -229,7 +247,7 @@ function planChanges(changes, syncMap, readCell) {
       errors.push('formula cell ' + reference.sheet + '!' + reference.cell);
       continue;
     }
-    if (sameValue_(state.value, change.newValue)) continue;
+    if (state.alreadyApplied || sameValue_(state.value, change.newValue)) continue;
     if (!sameValue_(state.value, change.oldValue)) {
       errors.push('old value conflict for ' + change.id);
       continue;
